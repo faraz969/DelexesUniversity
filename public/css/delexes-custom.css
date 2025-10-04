@@ -1,0 +1,293 @@
+/* DELEXES UNIVERSITY COLLEGE Custom Color Scheme */
+
+:root {
+  /* DELEXES Color Palette */
+  --delexes-dark-blue: #1e3a8a;
+  --delexes-light-blue: #3b82f6;
+  --delexes-red: #dc2626;
+  --delexes-white: #ffffff;
+  --delexes-light-gray: #f8fafc;
+  --delexes-dark-gray: #374151;
+}
+
+/* Override Bootstrap primary colors with DELEXES colors */
+.btn-primary {
+  --bs-btn-bg: var(--delexes-dark-blue);
+  --bs-btn-border-color: var(--delexes-dark-blue);
+  --bs-btn-hover-bg: #1e40af;
+  --bs-btn-hover-border-color: #1e40af;
+  --bs-btn-active-bg: #1d4ed8;
+  --bs-btn-active-border-color: #1d4ed8;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--delexes-dark-blue);
+  --bs-btn-border-color: var(--delexes-dark-blue);
+  --bs-btn-hover-bg: var(--delexes-dark-blue);
+  --bs-btn-hover-border-color: var(--delexes-dark-blue);
+}
+
+.btn-danger {
+  --bs-btn-bg: var(--delexes-red);
+  --bs-btn-border-color: var(--delexes-red);
+  --bs-btn-hover-bg: #b91c1c;
+  --bs-btn-hover-border-color: #b91c1c;
+}
+
+.btn-info {
+  --bs-btn-bg: var(--delexes-light-blue);
+  --bs-btn-border-color: var(--delexes-light-blue);
+  --bs-btn-hover-bg: #2563eb;
+  --bs-btn-hover-border-color: #2563eb;
+}
+
+/* Card styling with DELEXES colors */
+.card {
+  border-color: rgba(30, 58, 138, 0.1);
+  box-shadow: 0 2px 4px rgba(30, 58, 138, 0.1);
+}
+
+.card-header {
+  background-color: var(--delexes-light-gray);
+  border-bottom-color: rgba(30, 58, 138, 0.1);
+  color: var(--delexes-dark-blue);
+  font-weight: 600;
+}
+
+/* Form styling */
+.form-control:focus {
+  border-color: var(--delexes-light-blue);
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+.form-select:focus {
+  border-color: var(--delexes-light-blue);
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+/* Table styling */
+.table {
+  --bs-table-border-color: rgba(30, 58, 138, 0.1);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-striped-bg: rgba(30, 58, 138, 0.05);
+}
+
+/* Alert styling */
+.alert-primary {
+  --bs-alert-color: var(--delexes-dark-blue);
+  --bs-alert-bg: rgba(30, 58, 138, 0.1);
+  --bs-alert-border-color: rgba(30, 58, 138, 0.2);
+}
+
+.alert-danger {
+  --bs-alert-color: var(--delexes-red);
+  --bs-alert-bg: rgba(220, 38, 38, 0.1);
+  --bs-alert-border-color: rgba(220, 38, 38, 0.2);
+}
+
+.alert-info {
+  --bs-alert-color: var(--delexes-light-blue);
+  --bs-alert-bg: rgba(59, 130, 246, 0.1);
+  --bs-alert-border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Badge styling */
+.badge.bg-primary {
+  background-color: var(--delexes-dark-blue) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--delexes-red) !important;
+}
+
+.badge.bg-info {
+  background-color: var(--delexes-light-blue) !important;
+}
+
+/* Link styling */
+a {
+  color: var(--delexes-light-blue);
+}
+
+a:hover {
+  color: var(--delexes-dark-blue);
+}
+
+/* Navbar dropdown styling */
+.dropdown-menu {
+  border-color: rgba(30, 58, 138, 0.1);
+  box-shadow: 0 4px 6px rgba(30, 58, 138, 0.1);
+}
+
+.dropdown-item:hover {
+  background-color: rgba(30, 58, 138, 0.1);
+  color: var(--delexes-dark-blue);
+}
+
+.dropdown-item.active {
+  background-color: var(--delexes-dark-blue);
+}
+
+/* Pagination styling */
+.page-link {
+  color: var(--delexes-light-blue);
+  border-color: rgba(30, 58, 138, 0.1);
+}
+
+.page-link:hover {
+  color: var(--delexes-dark-blue);
+  background-color: rgba(30, 58, 138, 0.1);
+  border-color: rgba(30, 58, 138, 0.2);
+}
+
+.page-item.active .page-link {
+  background-color: var(--delexes-dark-blue);
+  border-color: var(--delexes-dark-blue);
+}
+
+/* Progress bar styling */
+.progress-bar {
+  background-color: var(--delexes-dark-blue);
+}
+
+/* Modal styling */
+.modal-header {
+  background-color: var(--delexes-light-gray);
+  border-bottom-color: rgba(30, 58, 138, 0.1);
+}
+
+.modal-title {
+  color: var(--delexes-dark-blue);
+  font-weight: 600;
+}
+
+/* Footer styling */
+.footer {
+  background-color: var(--delexes-dark-blue);
+  color: var(--delexes-white);
+}
+
+.footer a {
+  color: var(--delexes-white);
+}
+
+.footer a:hover {
+  color: var(--delexes-light-blue);
+}
+
+/* Custom utility classes */
+.text-delexes-primary {
+  color: var(--delexes-dark-blue) !important;
+}
+
+.text-delexes-secondary {
+  color: var(--delexes-light-blue) !important;
+}
+
+.text-delexes-danger {
+  color: var(--delexes-red) !important;
+}
+
+.bg-delexes-primary {
+  background-color: var(--delexes-dark-blue) !important;
+}
+
+.bg-delexes-secondary {
+  background-color: var(--delexes-light-blue) !important;
+}
+
+.bg-delexes-danger {
+  background-color: var(--delexes-red) !important;
+}
+
+.bg-delexes-light {
+  background-color: var(--delexes-light-gray) !important;
+}
+
+.border-delexes-primary {
+  border-color: var(--delexes-dark-blue) !important;
+}
+
+.border-delexes-secondary {
+  border-color: var(--delexes-light-blue) !important;
+}
+
+.border-delexes-danger {
+  border-color: var(--delexes-red) !important;
+}
+
+/* Logo styling */
+.navbar-brand img {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar-brand {
+    font-size: 0.9rem;
+  }
+  
+  .navbar-brand img {
+    height: 40px;
+  }
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loading spinner with DELEXES colors */
+.spinner-border-primary {
+  color: var(--delexes-dark-blue);
+}
+
+/* Custom button styles */
+.btn-delexes-primary {
+  background-color: var(--delexes-dark-blue);
+  border-color: var(--delexes-dark-blue);
+  color: var(--delexes-white);
+}
+
+.btn-delexes-primary:hover {
+  background-color: #1e40af;
+  border-color: #1e40af;
+  color: var(--delexes-white);
+}
+
+.btn-delexes-secondary {
+  background-color: var(--delexes-light-blue);
+  border-color: var(--delexes-light-blue);
+  color: var(--delexes-white);
+}
+
+.btn-delexes-secondary:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  color: var(--delexes-white);
+}
+
+.btn-delexes-danger {
+  background-color: var(--delexes-red);
+  border-color: var(--delexes-red);
+  color: var(--delexes-white);
+}
+
+.btn-delexes-danger:hover {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
+  color: var(--delexes-white);
+}

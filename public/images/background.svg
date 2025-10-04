@@ -1,0 +1,81 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:0.9" />
+      <stop offset="50%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.9" />
+    </linearGradient>
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  <rect width="1200" height="800" fill="url(#gridPattern)"/>
+  
+  <!-- University building silhouette -->
+  <g transform="translate(0, 200)">
+    <!-- Main building -->
+    <rect x="50" y="200" width="300" height="400" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    
+    <!-- Building details -->
+    <rect x="70" y="220" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="130" y="220" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="190" y="220" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="250" y="220" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    
+    <rect x="70" y="280" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="130" y="280" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="190" y="280" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="250" y="280" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    
+    <rect x="70" y="340" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="130" y="340" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="190" y="340" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    <rect x="250" y="340" width="40" height="40" fill="rgba(255,255,255,0.2)"/>
+    
+    <!-- Tower -->
+    <rect x="200" y="100" width="80" height="500" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+    <rect x="210" y="120" width="20" height="20" fill="rgba(255,255,255,0.3)"/>
+    <rect x="250" y="120" width="20" height="20" fill="rgba(255,255,255,0.3)"/>
+    <rect x="210" y="160" width="20" height="20" fill="rgba(255,255,255,0.3)"/>
+    <rect x="250" y="160" width="20" height="20" fill="rgba(255,255,255,0.3)"/>
+    
+    <!-- Dome -->
+    <ellipse cx="240" cy="100" rx="50" ry="30" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  </g>
+  
+  <!-- Additional buildings -->
+  <g transform="translate(400, 300)">
+    <rect x="0" y="100" width="200" height="300" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    <rect x="20" y="120" width="30" height="30" fill="rgba(255,255,255,0.15)"/>
+    <rect x="60" y="120" width="30" height="30" fill="rgba(255,255,255,0.15)"/>
+    <rect x="100" y="120" width="30" height="30" fill="rgba(255,255,255,0.15)"/>
+    <rect x="140" y="120" width="30" height="30" fill="rgba(255,255,255,0.15)"/>
+  </g>
+  
+  <!-- Trees -->
+  <g transform="translate(650, 400)">
+    <ellipse cx="0" cy="0" rx="40" ry="60" fill="rgba(255,255,255,0.1)"/>
+    <rect x="-5" y="50" width="10" height="80" fill="rgba(255,255,255,0.15)"/>
+  </g>
+  
+  <g transform="translate(750, 450)">
+    <ellipse cx="0" cy="0" rx="35" ry="50" fill="rgba(255,255,255,0.08)"/>
+    <rect x="-4" y="40" width="8" height="60" fill="rgba(255,255,255,0.12)"/>
+  </g>
+  
+  <!-- Floating elements -->
+  <g opacity="0.3">
+    <circle cx="200" cy="150" r="3" fill="white"/>
+    <circle cx="350" cy="200" r="2" fill="white"/>
+    <circle cx="500" cy="100" r="4" fill="white"/>
+    <circle cx="150" cy="300" r="2" fill="white"/>
+    <circle cx="600" cy="250" r="3" fill="white"/>
+  </g>
+  
+  <!-- Overlay for better text readability -->
+  <rect x="0" y="0" width="1200" height="800" fill="rgba(0,0,0,0.2)"/>
+</svg>
