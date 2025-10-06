@@ -68,7 +68,7 @@
                 <div class="form-footer">
                     <p class="signup-link">
                         Don't have a PIN? 
-                        <a href="{{ route('registration.create') }}" class="signup-link-text">Buy a PIN</a>
+                        <a href="{{ route('registration.create') }}" class=" btn btn-delexes-primary">Buy a PIN</a>
                     </p>
                 </div>
             </form>

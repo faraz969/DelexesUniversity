@@ -67,7 +67,6 @@
                                 <th>Form Type</th>
                                 <th>Department</th>
                                 <th>HOD Status</th>
-                                <th>President Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -90,15 +89,7 @@
                                             <span class="badge bg-warning">{{ ucfirst($app->hod_status) }}</span>
                                         @endif
                                     </td>
-                                    <td>
-                                        @if($app->president_status === 'approved')
-                                            <span class="badge bg-success">Approved</span>
-                                        @elseif($app->president_status === 'rejected')
-                                            <span class="badge bg-danger">Rejected</span>
-                                        @else
-                                            <span class="badge bg-warning">{{ ucfirst($app->president_status) }}</span>
-                                        @endif
-                                    </td>
+                                    
                                     <td>
                                         <a class="btn btn-sm btn-primary" href="{{ route('registrar.applications.show', $app->id) }}">Review</a>
                                     </td>
@@ -187,7 +178,6 @@
                                 <th>Form Type</th>
                                 <th>Department</th>
                                 <th>HOD Status</th>
-                                <th>President Status</th>
                                 <th>Registrar Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -211,15 +201,7 @@
                                             <span class="badge bg-warning">{{ ucfirst($app->hod_status) }}</span>
                                         @endif
                                     </td>
-                                    <td>
-                                        @if($app->president_status === 'approved')
-                                            <span class="badge bg-success">Approved</span>
-                                        @elseif($app->president_status === 'rejected')
-                                            <span class="badge bg-danger">Rejected</span>
-                                        @else
-                                            <span class="badge bg-warning">{{ ucfirst($app->president_status) }}</span>
-                                        @endif
-                                    </td>
+                                    
                                     <td>
                                         @if($app->registrar_status === 'approved')
                                             <span class="badge bg-success">Approved</span>

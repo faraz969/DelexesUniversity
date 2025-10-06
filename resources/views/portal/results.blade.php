@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h3>Application Results</h3>
+<div class="container py-3">
+    <h3>Application Status</h3>
     @if($application)
         <p><strong>Status:</strong> {{ ucfirst(str_replace('_',' ', $application->status)) }}</p>
         @if($application->status === 'successful')

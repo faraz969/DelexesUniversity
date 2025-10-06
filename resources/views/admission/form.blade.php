@@ -144,10 +144,56 @@
     <fieldset>
       <legend>Personal Data</legend>
       <div class="row two">
+        <script>
+          // Sync hidden full_name from split fields
+          document.addEventListener('DOMContentLoaded', function(){
+            const surname = document.getElementById('surname');
+            const middle = document.getElementById('middle_name');
+            const other = document.getElementById('other_name');
+            const full = document.getElementById('full_name');
+            function syncFull(){
+              if (!full) return;
+              const parts = [other && other.value ? other.value.trim() : '', middle && middle.value ? middle.value.trim() : '', surname && surname.value ? surname.value.trim() : ''].filter(Boolean);
+              full.value = parts.join(' ').trim();
+            }
+            if (surname) surname.addEventListener('input', () => { syncFull(); autosaveDraft(); });
+            if (middle) middle.addEventListener('input', () => { syncFull(); autosaveDraft(); });
+            if (other) other.addEventListener('input', () => { syncFull(); autosaveDraft(); });
+            syncFull();
+          });
+        </script>
+        @php
+          $prefillFullName = trim($prefill['full_name'] ?? '');
+          $prefillSurname = '';
+          $prefillMiddle = '';
+          $prefillOther = '';
+          if ($prefillFullName !== '') {
+            $parts = preg_split('/\s+/', $prefillFullName);
+            if (count($parts) === 1) {
+              $prefillOther = $parts[0];
+            } elseif (count($parts) === 2) {
+              $prefillOther = $parts[0];
+              $prefillSurname = $parts[1];
+            } else {
+              $prefillOther = array_shift($parts);
+              $prefillSurname = array_pop($parts);
+              $prefillMiddle = implode(' ', $parts);
+            }
+          }
+        @endphp
         <div>
-          <label for="full_name">Full Name <span style="color:red">*</span></label>
-          <input id="full_name" name="full_name" type="text" value="{{ $prefill['full_name'] ?? '' }}" required />
+          <label for="surname">Surname <span style="color:red">*</span></label>
+          <input id="surname" name="surname" type="text" value="{{ $prefillSurname }}" required />
         </div>
+        <div>
+          <label for="middle_name">Middle Name</label>
+          <input id="middle_name" name="middle_name" type="text" value="{{ $prefillMiddle }}" />
+        </div>
+        <div>
+          <label for="other_name">Other Name <span style="color:red">*</span></label>
+          <input id="other_name" name="other_name" type="text" value="{{ $prefillOther }}" required />
+        </div>
+        <input id="full_name" name="full_name" type="hidden" value="{{ $prefill['full_name'] ?? '' }}" />
         <div>
           <label for="dob">Date of Birth <span style="color:red">*</span></label>
           <input id="dob" name="dob" type="date" value="{{ $prefill['dob'] ?? '' }}" required />
@@ -416,7 +462,7 @@
       <div class="hint">Tip: If you want applicants to choose multiple programmes, keep these dropdowns and also collect "Order of Preference" below.</div>
 
       <hr style="margin:16px 0;">
-      <legend style="font-size:1rem;">Preferences & Languages</legend>
+      <legend style="font-size:1rem;">Preferences</legend>
       <div class="row three">
         <div>
           <label for="preferred_session">Preferred Session</label>
@@ -448,26 +494,7 @@
         </div>
       </div>
 
-      <div class="row three" style="margin-top:12px;">
-        <div>
-          <label for="english_level">English Proficiency</label>
-          <select id="english_level" name="english_level">
-            @php $el = $prefill['english_level'] ?? '' @endphp
-            <option value="" {{ $el==='' ? 'selected' : '' }}>-- Select --</option>
-            <option value="Beginner" {{ $el==='Beginner' ? 'selected' : '' }}>Beginner</option>
-            <option value="Intermediate" {{ $el==='Intermediate' ? 'selected' : '' }}>Intermediate</option>
-            <option value="Advanced" {{ $el==='Advanced' ? 'selected' : '' }}>Advanced</option>
-          </select>
-        </div>
-        <div>
-          <label for="mother_tongue">Mother Tongue</label>
-          <input id="mother_tongue" name="mother_tongue" value="{{ $prefill['mother_tongue'] ?? '' }}" />
-        </div>
-        <div>
-          <label for="other_languages">Other Languages</label>
-          <input id="other_languages" name="other_languages" value="{{ $prefill['other_languages'] ?? '' }}" />
-        </div>
-      </div>
+      
 
       <hr style="margin:16px 0;">
       <legend style="font-size:1rem;">Order of Preference (Repeat Selected Programmes)</legend>

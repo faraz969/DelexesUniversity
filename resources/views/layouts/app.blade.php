@@ -92,7 +92,7 @@
                             @else
                                 <li class="nav-item"><a class="nav-link text-white" href="{{ route('portal.dashboard') }}">Dashboard</a></li>
                                 <li class="nav-item"><a class="nav-link text-white" href="{{ route('portal.application') }}">My Application</a></li>
-                                <li class="nav-item"><a class="nav-link text-white" href="{{ route('portal.results') }}">Application Results</a></li>
+                                <li class="nav-item"><a class="nav-link text-white" href="{{ route('portal.results') }}">Application Status</a></li>
                             @endif
                         @endauth
                     </ul>

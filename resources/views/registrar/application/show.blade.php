@@ -119,20 +119,14 @@
                             @if($application->hod_reviewed_at)
                                 <br><small class="text-muted">{{ $application->hod_reviewed_at->format('M d, Y H:i') }}</small>
                             @endif
-                        </div>
-                        <div class="col-md-4">
-                            <h6>President Review</h6>
-                            @if($application->president_status === 'approved')
-                                <span class="badge bg-success">Approved</span>
-                            @elseif($application->president_status === 'rejected')
-                                <span class="badge bg-danger">Rejected</span>
-                            @else
-                                <span class="badge bg-warning">{{ ucfirst($application->president_status) }}</span>
-                            @endif
-                            @if($application->president_reviewed_at)
-                                <br><small class="text-muted">{{ $application->president_reviewed_at->format('M d, Y H:i') }}</small>
+                            @if($application->hod_comments)
+                                <div class="mt-2">
+                                    <strong>HOD Comments:</strong>
+                                    <p class="mb-0">{{ $application->hod_comments }}</p>
+                                </div>
                             @endif
                         </div>
+                       
                         <div class="col-md-4">
                             <h6>Registrar Review</h6>
                             @if($application->registrar_status === 'approved')

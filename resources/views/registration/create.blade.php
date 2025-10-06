@@ -35,6 +35,25 @@
         border-radius: 8px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
+    /* Ensure flag and country name appear on one line in results */
+    .select2-result-country {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+    .select2-result-country__flag,
+    .select2-result-country__name {
+        line-height: 1;
+        display: inline-block;
+    }
+    /* Ensure the selected value (rendered) shows flag and name inline */
+    #nationality + .select2 .select2-selection__rendered {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
 </style>
 @endsection
 
@@ -42,7 +61,9 @@
 <div class="auth-container">
     <!-- Background Section (70% width) -->
     <div class="auth-background">
-        
+    <div class="background-overlay">
+            
+            </div>
     </div>
 
     <!-- Form Section (30% width) -->
@@ -485,7 +506,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const priceDisplay = document.getElementById('price-display');
     const priceAmount = document.getElementById('price-amount');
 
-    function updatePrice() {
+    // Expose globally so other scripts (e.g., Select2 handlers) can call it
+    window.updatePrice = function() {
         const selectedFormType = formTypeSelect.options[formTypeSelect.selectedIndex];
         const selectedNationality = nationalitySelect.value;
 
@@ -543,8 +565,8 @@ document.addEventListener('DOMContentLoaded', function() {
         showPaymentMode();
     }
 
-    formTypeSelect.addEventListener('change', updatePrice);
-    nationalitySelect.addEventListener('change', updatePrice);
+    formTypeSelect.addEventListener('change', window.updatePrice);
+    nationalitySelect.addEventListener('change', window.updatePrice);
 
     // Show payment mode section when price is displayed
     function showPaymentMode() {

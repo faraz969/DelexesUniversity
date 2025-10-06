@@ -119,20 +119,14 @@
                             @if($application->hod_reviewed_at)
                                 <br><small class="text-muted">{{ $application->hod_reviewed_at->format('M d, Y H:i') }}</small>
                             @endif
-                        </div>
-                        <div class="col-md-4">
-                            <h6>President Review</h6>
-                            @if($application->president_status === 'approved')
-                                <span class="badge bg-success">Approved</span>
-                            @elseif($application->president_status === 'rejected')
-                                <span class="badge bg-danger">Rejected</span>
-                            @else
-                                <span class="badge bg-warning">{{ ucfirst($application->president_status) }}</span>
-                            @endif
-                            @if($application->president_reviewed_at)
-                                <br><small class="text-muted">{{ $application->president_reviewed_at->format('M d, Y H:i') }}</small>
+                            @if($application->hod_comments)
+                                <div class="mt-2">
+                                    <strong>HOD Comments:</strong>
+                                    <p class="mb-0">{{ $application->hod_comments }}</p>
+                                </div>
                             @endif
                         </div>
+                        
                         <div class="col-md-4">
                             <h6>Registrar Review</h6>
                             @if($application->registrar_status === 'approved')
@@ -144,6 +138,12 @@
                             @endif
                             @if($application->registrar_reviewed_at)
                                 <br><small class="text-muted">{{ $application->registrar_reviewed_at->format('M d, Y H:i') }}</small>
+                            @endif
+                            @if($application->registrar_comments)
+                                <div class="mt-2">
+                                    <strong>Registrar Comments:</strong>
+                                    <p class="mb-0">{{ $application->registrar_comments }}</p>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -249,72 +249,22 @@
                 </div>
             @endif
 
-            <!-- President Review Section -->
-            @if($application->hod_status === 'approved' && $application->president_status === 'pending')
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">President Review</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ route('president.applications.approve', $application->id) }}" class="mb-3">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="approve_comments" class="form-label">Comments (Optional)</label>
-                                <textarea class="form-control" id="approve_comments" name="comments" rows="3" placeholder="Add any comments for approval..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success">Approve Application</button>
-                        </form>
-
-                        <form method="POST" action="{{ route('president.applications.reject', $application->id) }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="reject_comments" class="form-label">Rejection Comments (Required)</label>
-                                <textarea class="form-control" id="reject_comments" name="comments" rows="3" placeholder="Please provide reason for rejection..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-danger">Reject Application</button>
-                        </form>
-                    </div>
+            <!-- President Comment Section (no status updates) -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">President Comment</h5>
                 </div>
-            @elseif($application->hod_status !== 'approved')
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Review Status</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-warning">
-                            <strong>Cannot Review:</strong> This application has not been approved by HOD yet. 
-                            You can only review applications that have been approved by the Head of Department.
+                <div class="card-body">
+                    <form method="POST" action="{{ route('president.applications.comment', $application->id) }}">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="comment_text" class="form-label">Add Comment</label>
+                            <textarea class="form-control" id="comment_text" name="comments" rows="3" placeholder="Write your comment..." required>{{ old('comments', $application->president_comments) }}</textarea>
                         </div>
-                    </div>
+                        <button type="submit" class="btn btn-primary">Save Comment</button>
+                    </form>
                 </div>
-            @else
-                <!-- Show Previous Review -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Previous Review</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Status:</strong> 
-                                    @if($application->president_status === 'approved')
-                                        <span class="badge bg-success">Approved</span>
-                                    @elseif($application->president_status === 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
-                                    @endif
-                                </p>
-                                <p><strong>Reviewed At:</strong> {{ $application->president_reviewed_at ? $application->president_reviewed_at->format('M d, Y H:i') : '-' }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                @if($application->president_comments)
-                                    <p><strong>Comments:</strong></p>
-                                    <p>{{ $application->president_comments }}</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
+            </div>
         </div>
     </div>
 </div>

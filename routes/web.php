@@ -53,8 +53,8 @@ Route::middleware(['auth', 'role:hod'])->prefix('hod')->name('hod.')->group(func
 Route::middleware(['auth', 'role:president'])->prefix('president')->name('president.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\PresidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/applications/{application}', [App\Http\Controllers\PresidentController::class, 'showApplication'])->name('applications.show');
-    Route::post('/applications/{application}/approve', [App\Http\Controllers\PresidentController::class, 'approveApplication'])->name('applications.approve');
-    Route::post('/applications/{application}/reject', [App\Http\Controllers\PresidentController::class, 'rejectApplication'])->name('applications.reject');
+    // Comment-only endpoint (status updates disabled)
+    Route::post('/applications/{application}/comment', [App\Http\Controllers\PresidentController::class, 'commentApplication'])->name('applications.comment');
 });
 
 // Registrar Routes
