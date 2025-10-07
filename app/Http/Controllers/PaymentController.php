@@ -81,7 +81,7 @@ class PaymentController extends Controller
         ]);
 
         // Generate unique invoice ID - using simpler format
-        $invoiceId = 'test' . time();
+        $invoiceId = 'DUC' . time();
 
         // Format total WITHOUT thousand separators to avoid gateway rejection
         // Ensure a dot as decimal separator and no grouping separators
@@ -124,8 +124,121 @@ class PaymentController extends Controller
                 'invoice_id' => $invoiceId,
                 'amount' => $price,
                 'is_local' => $isLocal,
+                'payment_mode' => $request->input('payment_mode', 'ecobank')
             ]
         ]);
+
+        // Branch: GCB vs Ecobank based on selected payment method
+        $selectedPaymentMode = strtolower($request->input('payment_mode', 'ecobank'));
+
+        if ($selectedPaymentMode === 'gcb') {
+            try {
+                // Build GCB Checkout request
+                $gcbApiKey = env('GCB_API_KEY', 'GCB-5u71RtOnW8pxMweww5WhKuqxSkFWGW8N');
+                $maskedKey = substr($gcbApiKey, 0, 6) . '...' . substr($gcbApiKey, -4);
+                // Use provided base URL for GCB UAT, configurable via env
+                $gcbBaseUrl = rtrim(env('GCB_BASE_URL', 'https://epayuat.gcbltd.com:98/paymentgatewayapi'), '/');
+                $gcbCheckoutUrl = $gcbBaseUrl . '/checkout';
+
+                $payload = [
+                    'merchantRef' => $invoiceId,
+                    'amount' => (float) number_format((float) $price, 2, '.', ''),
+                    'currency' => 'GHS',
+                    'description' => 'Admission Form Purchase - ' . $formType->name,
+                    // Intentionally omit paymentOption to let gateway decide (UAT docs show it optional)
+                    // 'paymentOption' => null,
+                    'callbackUrl' => route('payment.success'),
+                ];
+                // Remove any null/empty values to avoid schema rejection
+                $payload = array_filter($payload, function ($v) { return !is_null($v) && $v !== ''; });
+
+                Log::info('Initiating GCB Checkout', [
+                    'url' => $gcbCheckoutUrl,
+                    'payload' => $payload,
+                    'api_key_present' => !empty($gcbApiKey),
+                    'api_key_masked' => $maskedKey,
+                ]);
+
+                $response = Http::timeout(30)
+                    // UAT may use self-signed certs; allow disabling via env (default false)
+                    ->withOptions(['verify' => env('GCB_TLS_VERIFY', false)])
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                        // Some servers are finicky about header casing; send both
+                        'X-Api-Key' => $gcbApiKey,
+                        
+                        // Some API gateways map the OpenAPI security scheme name to a header
+                       
+                        'Accept' => 'application/json',
+                    ])
+                    ->post($gcbCheckoutUrl, $payload);
+
+                Log::info('GCB API Response', [
+                    'status' => $response->status(),
+                    'headers' => $response->headers(),
+                    'body' => $response->body(),
+                ]);
+
+                if (!$response->successful()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'GCB gateway error (HTTP ' . $response->status() . ').',
+                        'gateway_response' => $response->body(),
+                        'headers' => $response->headers(),
+                    ], 500);
+                }
+
+                $data = [];
+                try { $data = $response->json(); } catch (\Throwable $t) { /* ignore json errors */ }
+
+                // Try common fields for redirect URL
+                $redirectUrl = $data['checkoutUrl'] ?? $data['payment_url'] ?? $data['url'] ?? $data['redirectUrl'] ?? null;
+                if (!$redirectUrl) {
+                    // Sometimes redirect comes via Location header
+                    $locationHeader = $response->header('Location') ?? ($response->headers()['Location'][0] ?? null);
+                    if ($locationHeader) {
+                        $redirectUrl = $locationHeader;
+                    }
+                }
+
+                if ($redirectUrl) {
+                    return response()->json([
+                        'success' => true,
+                        'payment_url' => $redirectUrl,
+                        'invoice_id' => $invoiceId,
+                    ]);
+                }
+
+                // If API returns a checkout identifier only
+                $checkoutId = $data['checkOutId'] ?? $data['checkoutId'] ?? null;
+                if ($checkoutId) {
+                    // Try building a hosted URL under the same prefix if applicable
+                    $hostedUrl = 'https://epayuat.gcbltd.com:98/paymentgateway/checkout?id=' . $checkoutId;
+                    return response()->json([
+                        'success' => true,
+                        'payment_url' => $hostedUrl,
+                        'invoice_id' => $invoiceId,
+                    ]);
+                }
+
+                // Fallback: unknown response
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unexpected GCB response; no redirect URL provided.',
+                    'gateway_response' => $data ?: $response->body(),
+                ], 500);
+            } catch (\Exception $e) {
+                Log::error('GCB Initiation Error', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while initiating GCB payment.',
+                ], 500);
+            }
+        }
 
         try {
             // Log payment data being sent
@@ -201,12 +314,53 @@ class PaymentController extends Controller
      */
     public function paymentSuccess(Request $request)
     {
+        // Log all incoming parameters for debugging
+        Log::info('Payment Success Callback', [
+            'query_params' => $request->all(),
+            'headers' => $request->headers->all(),
+        ]);
+
         // Get invoice ID from request or session
-        $invoiceId = $request->get('invoice_id') ?? session('pending_registration.invoice_id');
+        $invoiceId = $request->get('invoice_id') ?? $request->get('merchantRef') ?? session('pending_registration.invoice_id');
         
         if (!$invoiceId) {
             return redirect()->route('registration.create')
                 ->with('error', 'Invalid payment response.');
+        }
+
+        // Check if this was a GCB payment
+        $paymentMode = session('pending_registration.payment_mode');
+        if ($paymentMode === 'gcb') {
+            // GCB may return checkOutId or status in query params
+            $checkOutId = $request->get('checkOutId') ?? $request->get('id') ?? $request->get('transactionId');
+            $statusParam = $request->get('status') ?? $request->get('paymentStatus');
+
+            Log::info('GCB Payment Return', [
+                'invoice_id' => $invoiceId,
+                'checkOutId' => $checkOutId,
+                'status_param' => $statusParam,
+            ]);
+
+            // If checkOutId is present, verify status with GCB
+            if ($checkOutId) {
+                $verifiedStatus = $this->checkGcbPaymentStatus($checkOutId);
+                Log::info('GCB Status Check Result', ['verified_status' => $verifiedStatus]);
+
+                if (!in_array(strtolower($verifiedStatus), ['paid', 'success', 'completed', 'successful'])) {
+                    return redirect()->route('payment.cancelled')
+                        ->with('error', 'Payment was not completed. Status: ' . $verifiedStatus);
+                }
+            } elseif ($statusParam) {
+                // Use status from query param if no checkOutId
+                if (!in_array(strtolower($statusParam), ['paid', 'success', 'completed', 'successful'])) {
+                    return redirect()->route('payment.cancelled')
+                        ->with('error', 'Payment was not completed. Status: ' . $statusParam);
+                }
+            } else {
+                // No status info: treat as cancelled
+                return redirect()->route('payment.cancelled')
+                    ->with('error', 'Payment status could not be verified.');
+            }
         }
 
         // Simply complete registration without verification
@@ -280,6 +434,55 @@ class PaymentController extends Controller
     }
 
     /**
+     * Check payment status with GCB
+     */
+    private function checkGcbPaymentStatus($checkOutId)
+    {
+        try {
+            $gcbApiKey = env('GCB_API_KEY', 'GCB-5u71RtOnW8pxMweww5WhKuqxSkFWGW8N');
+            $gcbBaseUrl = rtrim(env('GCB_BASE_URL', 'https://epayuat.gcbltd.com:98/paymentgatewayapi'), '/');
+            $statusUrl = $gcbBaseUrl . '/transactions/' . $checkOutId . '/status';
+
+            Log::info('Checking GCB Payment Status', [
+                'checkOutId' => $checkOutId,
+                'url' => $statusUrl,
+            ]);
+
+            $response = Http::timeout(30)
+                ->withOptions(['verify' => env('GCB_TLS_VERIFY', false)])
+                ->withHeaders([
+                    'X-Api-Key' => $gcbApiKey,
+                    'Accept' => 'application/json',
+                ])
+                ->get($statusUrl);
+
+            Log::info('GCB Status API Response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                // Return the status field from response (adjust based on actual API response)
+                return $data['status'] ?? $data['paymentStatus'] ?? 'unknown';
+            } else {
+                Log::error('GCB Status Check Failed', [
+                    'checkOutId' => $checkOutId,
+                    'status' => $response->status(),
+                    'response' => $response->body()
+                ]);
+                return 'failed';
+            }
+        } catch (\Exception $e) {
+            Log::error('GCB Status Check Error', [
+                'checkOutId' => $checkOutId,
+                'error' => $e->getMessage()
+            ]);
+            return 'failed';
+        }
+    }
+
+    /**
      * Complete user registration after successful payment
      */
     private function completeRegistration($invoiceId, $paymentStatus)
@@ -300,8 +503,8 @@ class PaymentController extends Controller
         $pin = Str::upper(Str::random(8));
         $pinExpiry = Carbon::now()->addMonths(3);
         
-        // Generate serial number (for students)
-        $serialNumber = 'DUX' . date('Y') . str_pad(User::count() + 1, 6, '0', STR_PAD_LEFT);
+        // Generate unique serial number (DUC + random 6 digits)
+        $serialNumber = $this->generateUniqueSerialNumber();
 
         // Create or update user
         $user = User::updateOrCreate(
@@ -409,5 +612,36 @@ class PaymentController extends Controller
             default:
                 return 'mtn'; // Default to MTN
         }
+    }
+
+    /**
+     * Generate a unique serial number: DUC + 6 random digits
+     */
+    private function generateUniqueSerialNumber()
+    {
+        $maxAttempts = 10;
+        $attempt = 0;
+
+        do {
+            // Generate DUC + 6 random digits (100000 to 999999)
+            $randomNumber = rand(100000, 999999);
+            $serialNumber = 'DUC' . $randomNumber;
+
+            // Check if it already exists
+            $exists = User::where('serial_number', $serialNumber)->exists();
+            
+            $attempt++;
+            
+            if (!$exists) {
+                return $serialNumber;
+            }
+            
+            if ($attempt >= $maxAttempts) {
+                // Fallback: use timestamp-based unique serial
+                return 'DUC' . substr(time(), -6);
+            }
+        } while ($exists);
+
+        return $serialNumber;
     }
 }

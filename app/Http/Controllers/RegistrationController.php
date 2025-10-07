@@ -36,7 +36,7 @@ class RegistrationController extends Controller
         $validated['student_type'] = $validated['nationality'] === 'Ghana' ? 'local' : 'international';
 
         $pin = Str::upper(Str::random(8));
-        $serialNumber = 'DEX' . date('Y') . str_pad(User::count() + 1, 6, '0', STR_PAD_LEFT);
+        $serialNumber = $this->generateUniqueSerialNumber();
         $pinExpiry = Carbon::now()->addMonths(3);
 
         $user = User::updateOrCreate(
@@ -107,5 +107,38 @@ class RegistrationController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Generate a unique serial number: DUC + 6 random digits
+     *
+     * @return string
+     */
+    private function generateUniqueSerialNumber()
+    {
+        $maxAttempts = 10;
+        $attempt = 0;
+
+        do {
+            // Generate DUC + 6 random digits (100000 to 999999)
+            $randomNumber = rand(100000, 999999);
+            $serialNumber = 'DUC' . $randomNumber;
+
+            // Check if it already exists
+            $exists = User::where('serial_number', $serialNumber)->exists();
+            
+            $attempt++;
+            
+            if (!$exists) {
+                return $serialNumber;
+            }
+            
+            if ($attempt >= $maxAttempts) {
+                // Fallback: use timestamp-based unique serial
+                return 'DUC' . substr(time(), -6);
+            }
+        } while ($exists);
+
+        return $serialNumber;
     }
 }

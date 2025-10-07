@@ -1604,22 +1604,92 @@ function previewEmploymentFile(idx) {
 }
 
 // Form validation on submit
-(function attachEmploymentValidation() {
-  const form = document.querySelector('form');
-  if (!form) return;
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('applicationForm');
+  
+  if (!form) {
+    console.log('WARNING: Form not found!');
+    return;
+  }
+  
+  console.log('Form validation listener attached successfully');
+  
   form.addEventListener('submit', function (e) {
-    // Validate all tabs before submission
-  for (let i = 0; i < totalTabs; i++) {
+    console.log('Form submit validation triggered');
+    
+    // FIRST: Specifically validate Documents tab required files (Priority check)
+    const ghanaCardFront = document.getElementById('ghana_card_front');
+    const ghanaCardBack = document.getElementById('ghana_card_back');
+    const passportPicture = document.getElementById('passport_picture');
+    
+    // Only validate if these elements exist (not in submitted/view mode)
+    if (ghanaCardFront) {
+      if (!ghanaCardFront.files || ghanaCardFront.files.length === 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        currentTab = 4; // Documents tab
+        showTab(currentTab);
+        ghanaCardFront.style.outline = '2px solid #e53935';
+        setTimeout(() => ghanaCardFront.focus(), 100);
+        alert('Please upload Ghana Card (Front). This is required.');
+        return false;
+      }
+    }
+    
+    if (ghanaCardBack) {
+      if (!ghanaCardBack.files || ghanaCardBack.files.length === 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        currentTab = 4; // Documents tab
+        showTab(currentTab);
+        ghanaCardBack.style.outline = '2px solid #e53935';
+        setTimeout(() => ghanaCardBack.focus(), 100);
+        alert('Please upload Ghana Card (Back). This is required.');
+        return false;
+      }
+    }
+    
+    if (passportPicture) {
+      if (!passportPicture.files || passportPicture.files.length === 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        currentTab = 4; // Documents tab
+        showTab(currentTab);
+        passportPicture.style.outline = '2px solid #e53935';
+        setTimeout(() => passportPicture.focus(), 100);
+        alert('Please upload Passport Picture. This is required.');
+        return false;
+      }
+    }
+    
+    // SECOND: Validate all tabs before submission
+    for (let i = 0; i < totalTabs; i++) {
       const tabContent = document.getElementById(['personal', 'education', 'programs', 'employment', 'documents'][i]);
+      if (!tabContent) continue;
+      
       const requiredFields = tabContent.querySelectorAll('input[required], select[required], textarea[required]');
       
       for (let field of requiredFields) {
-        if (!field.value.trim()) {
+        // Handle file inputs separately
+        if (field.type === 'file') {
+          if (!field.files || field.files.length === 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Switch to the tab with missing fields
+            currentTab = i;
+            showTab(currentTab);
+            setTimeout(() => field.focus(), 100);
+            field.style.outline = '2px solid #e53935';
+            alert(`Please upload the required file: ${field.previousElementSibling?.textContent || 'Required file'}`);
+            return false;
+          }
+        } else if (!field.value.trim()) {
           e.preventDefault();
+          e.stopPropagation();
           // Switch to the tab with missing fields
           currentTab = i;
           showTab(currentTab);
-          field.focus();
+          setTimeout(() => field.focus(), 100);
           alert(`Please fill in all required fields in the ${getTabName(i)} section.`);
           return false;
         }
@@ -1645,7 +1715,22 @@ function previewEmploymentFile(idx) {
       }
     }
   });
+});
+</script>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/68e59523a72e351952185ab1/1j70ct4nl';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
+<!--End of Tawk.to Script-->
+
 @endsection
 

@@ -151,7 +151,25 @@
                     </div>
                 </div>
 
-                
+                <div id="payment-mode-section" class="form-group" style="display: none;">
+                    <label class="form-label">Select Payment Method <span class="text-danger">*</span></label>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <input type="checkbox" id="payment_ecobank" class="payment-radio" />
+                            <label for="payment_ecobank" class="payment-label w-100">
+                                <i class="fas fa-university"></i> Eco Bank
+                            </label>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="checkbox" id="payment_gcb" class="payment-radio" />
+                            <label for="payment_gcb" class="payment-label w-100">
+                                <i class="fas fa-university"></i> GCB Bank
+                            </label>
+                        </div>
+                    </div>
+                    <input type="hidden" name="payment_mode" id="payment_mode" value="" />
+                </div>
+
 
                 <div class="form-group">
                     <button type="submit" class="btn btn-delexes-primary btn-block" id="submit-btn">
@@ -584,6 +602,40 @@ document.addEventListener('DOMContentLoaded', function() {
     formTypeSelect.addEventListener('change', showPaymentMode);
     nationalitySelect.addEventListener('change', showPaymentMode);
 
+    // Payment method selection logic (single-select behavior using checkboxes)
+    const paymentEcobank = document.getElementById('payment_ecobank');
+    const paymentGcb = document.getElementById('payment_gcb');
+    const paymentModeInput = document.getElementById('payment_mode');
+
+    function updatePaymentMode() {
+        if (paymentEcobank && paymentGcb) {
+            if (paymentEcobank.checked && paymentGcb.checked) {
+                // If both are checked, uncheck the one not just changed last; default to the last clicked
+                // This handler will be bound to both, so keep only the current target checked
+            }
+
+            if (paymentEcobank.checked && !paymentGcb.checked) {
+                paymentModeInput.value = 'ecobank';
+            } else if (!paymentEcobank.checked && paymentGcb.checked) {
+                paymentModeInput.value = 'gcb';
+            } else {
+                paymentModeInput.value = '';
+            }
+        }
+    }
+
+    function onPaymentClick(e) {
+        if (e.target === paymentEcobank) {
+            if (paymentEcobank.checked) paymentGcb.checked = false;
+        } else if (e.target === paymentGcb) {
+            if (paymentGcb.checked) paymentEcobank.checked = false;
+        }
+        updatePaymentMode();
+    }
+
+    if (paymentEcobank) paymentEcobank.addEventListener('change', onPaymentClick);
+    if (paymentGcb) paymentGcb.addEventListener('change', onPaymentClick);
+
     // Handle form submission with payment
     const form = document.querySelector('form');
     const submitBtn = document.getElementById('submit-btn');
@@ -593,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validate form
         const formData = new FormData(form);
-        const requiredFields = ['full_name', 'email', 'country_code', 'phone', 'nationality', 'form_type', ];
+        const requiredFields = ['full_name', 'email', 'country_code', 'phone', 'nationality', 'form_type', 'payment_mode'];
         
         for (let field of requiredFields) {
             if (!formData.get(field)) {
@@ -602,6 +654,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // Require payment mode selection
+        if (!formData.get('payment_mode')) {
+            alert('Please select a payment method (Eco Bank or GCB Bank).');
+            return;
+        }
+
         // Show loading state
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing Payment...';
