@@ -147,7 +147,7 @@ class PaymentController extends Controller
                     'description' => 'Admission Form Purchase - ' . $formType->name,
                     // Intentionally omit paymentOption to let gateway decide (UAT docs show it optional)
                     // 'paymentOption' => null,
-                    'callbackUrl' => route('payment.success'),
+                    'callBackUrl' => route('payment.success'),
                 ];
                 // Remove any null/empty values to avoid schema rejection
                 $payload = array_filter($payload, function ($v) { return !is_null($v) && $v !== ''; });
@@ -333,7 +333,7 @@ class PaymentController extends Controller
         if ($paymentMode === 'gcb') {
             // GCB may return checkOutId or status in query params
             $checkOutId = $request->get('checkOutId') ?? $request->get('id') ?? $request->get('transactionId');
-            $statusParam = $request->get('status') ?? $request->get('paymentStatus');
+            $statusParam = $request->get('statusCode') ?? $request->get('paymentStatus');
 
             Log::info('GCB Payment Return', [
                 'invoice_id' => $invoiceId,
