@@ -110,7 +110,14 @@
   <h1>Delexes University College <br/>Undergraduate Admission Form</h1>
 
   @if(!empty($submitted))
-    <div class="alert alert-success">Application submitted. Below is your application summary.</div>
+    <div class="alert alert-success">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Application submitted. Below is your application summary.</span>
+        <button type="button" class="btn btn-primary" onclick="printApplication()" style="background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; width:auto;">
+          <i class="fas fa-print"></i> Print Application
+        </button>
+      </div>
+    </div>
   @endif
 
   @if(empty($submitted))
@@ -267,6 +274,43 @@
         <label><input type="radio" name="has_disability" value="No" {{ ($prefill['has_disability'] ?? '')==='No' ? 'checked' : '' }} required /> No</label>
       </div>
       <textarea id="disability_details" name="disability_details" rows="2" placeholder="If Yes, please explain">{{ $prefill['disability_details'] ?? '' }}</textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>Guardian Details</legend>
+      <div class="row two">
+        <div>
+          <label for="guardian_name">Guardian Name</label>
+          <input id="guardian_name" name="guardian_name" type="text" value="{{ $prefill['guardian_name'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="guardian_email">Guardian Email</label>
+          <input id="guardian_email" name="guardian_email" type="email" value="{{ $prefill['guardian_email'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="guardian_phone">Guardian Phone Number</label>
+          <input id="guardian_phone" name="guardian_phone" type="tel" value="{{ $prefill['guardian_phone'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="guardian_alternate_phone">Guardian Alternate Number</label>
+          <input id="guardian_alternate_phone" name="guardian_alternate_phone" type="tel" value="{{ $prefill['guardian_alternate_phone'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="guardian_education">Guardian Education</label>
+          <input id="guardian_education" name="guardian_education" type="text" value="{{ $prefill['guardian_education'] ?? '' }}" placeholder="e.g., Bachelor's Degree" />
+        </div>
+        <div>
+          <label for="guardian_occupation">Guardian Occupation</label>
+          <input id="guardian_occupation" name="guardian_occupation" type="text" value="{{ $prefill['guardian_occupation'] ?? '' }}" placeholder="e.g., Teacher, Doctor" />
+        </div>
+        <div>
+          <label for="guardian_designation">Guardian Designation</label>
+          <input id="guardian_designation" name="guardian_designation" type="text" value="{{ $prefill['guardian_designation'] ?? '' }}" placeholder="e.g., Senior Manager" />
+        </div>
+      </div>
+
+      <label for="guardian_work_address">Guardian Work Address</label>
+      <textarea id="guardian_work_address" name="guardian_work_address" rows="2" placeholder="Enter guardian's work address">{{ $prefill['guardian_work_address'] ?? '' }}</textarea>
     </fieldset>
       </div>
 
@@ -570,7 +614,8 @@
                 <td><input type="text" name="employment[{{ $i }}][company]" value="{{ $emp['company'] ?? '' }}" placeholder="e.g., ABC Ltd"></td>
                 <td><input type="text" name="employment[{{ $i }}][duration]" value="{{ $emp['duration'] ?? '' }}" placeholder="e.g., Jan 2020 – Dec 2022"></td>
                 <td>
-                  <input type="file" id="employment_file_{{ $i }}" name="employment[{{ $i }}][file]" accept="application/pdf,image/*">
+                  <input type="file" id="employment_file_{{ $i }}" name="employment[{{ $i }}][file]" accept="application/pdf,image/*" class="file-upload" data-max-size="1048576">
+                  <small class="hint" style="display:block;margin-top:4px;">Max: 1MB</small>
                   <button type="button" class="btn-link" onclick="previewEmploymentFile({{ $i }})">Preview</button>
                   <div id="employment_preview_{{ $i }}" class="preview-box"></div>
                 </td>
@@ -584,7 +629,8 @@
                 <td><input type="text" name="employment[0][company]" placeholder="e.g., ABC Ltd"></td>
                 <td><input type="text" name="employment[0][duration]" placeholder="e.g., Jan 2020 – Dec 2022"></td>
                 <td>
-                  <input type="file" id="employment_file_0" name="employment[0][file]" accept="application/pdf,image/*">
+                  <input type="file" id="employment_file_0" name="employment[0][file]" accept="application/pdf,image/*" class="file-upload" data-max-size="1048576">
+                  <small class="hint" style="display:block;margin-top:4px;">Max: 1MB</small>
                   <button type="button" class="btn-link" onclick="previewEmploymentFile(0)">Preview</button>
                   <div id="employment_preview_0" class="preview-box"></div>
                 </td>
@@ -685,7 +731,8 @@
             </div>
           @endif
           @if(empty($submitted))
-            <input id="ghana_card_front" name="ghana_card_front" type="file" accept="image/*,application/pdf" required />
+            <input id="ghana_card_front" name="ghana_card_front" type="file" accept="image/*,application/pdf" required class="file-upload" data-max-size="1048576" />
+            <small class="hint">Max file size: 1MB</small>
           @endif
         </div>
         <div>
@@ -696,7 +743,8 @@
             </div>
           @endif
           @if(empty($submitted))
-            <input id="ghana_card_back" name="ghana_card_back" type="file" accept="image/*,application/pdf" required />
+            <input id="ghana_card_back" name="ghana_card_back" type="file" accept="image/*,application/pdf" required class="file-upload" data-max-size="1048576" />
+            <small class="hint">Max file size: 1MB</small>
           @endif
         </div>
         @if(empty($submitted))
@@ -717,7 +765,8 @@
             </div>
           @endif
           @if(empty($submitted))
-            <input id="official_transcript" name="official_transcript" type="file" accept="application/pdf,image/*" />
+            <input id="official_transcript" name="official_transcript" type="file" accept="application/pdf,image/*" class="file-upload" data-max-size="1048576" />
+            <small class="hint">Max file size: 1MB</small>
           @endif
         </div>
         @if(empty($submitted))
@@ -738,7 +787,8 @@
             </div>
           @endif
           @if(empty($submitted))
-            <input id="passport_picture" name="passport_picture" type="file" accept="image/*" required />
+            <input id="passport_picture" name="passport_picture" type="file" accept="image/*" required class="file-upload" data-max-size="1048576" />
+            <small class="hint">Max file size: 1MB</small>
           @endif
         </div>
         @if(empty($submitted))
@@ -761,7 +811,8 @@
             </div>
           @endif
           @if(empty($submitted))
-            <input id="other_academic_records" name="other_academic_records" type="file" accept="application/pdf,image/*" multiple />
+            <input id="other_academic_records" name="other_academic_records" type="file" accept="application/pdf,image/*" multiple class="file-upload" data-max-size="1048576" />
+            <small class="hint">Max file size: 1MB per file</small>
           @endif
           <div id="other_files_list" class="file-names"></div>
         </div>
@@ -942,6 +993,46 @@
       <div>
         <label>Disability Details</label>
         <textarea rows="2" readonly>{{ $application->data['disability_details'] }}</textarea>
+      </div>
+      @endif
+    </fieldset>
+
+    <fieldset>
+      <legend>Guardian Details</legend>
+      <div class="row two">
+        <div>
+          <label>Guardian Name</label>
+          <input type="text" value="{{ $application->data['guardian_name'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Guardian Email</label>
+          <input type="text" value="{{ $application->data['guardian_email'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Guardian Phone Number</label>
+          <input type="text" value="{{ $application->data['guardian_phone'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Guardian Alternate Number</label>
+          <input type="text" value="{{ $application->data['guardian_alternate_phone'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Guardian Education</label>
+          <input type="text" value="{{ $application->data['guardian_education'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Guardian Occupation</label>
+          <input type="text" value="{{ $application->data['guardian_occupation'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Guardian Designation</label>
+          <input type="text" value="{{ $application->data['guardian_designation'] ?? '' }}" readonly>
+        </div>
+      </div>
+      @if(!empty($application->data['guardian_work_address']))
+      <div>
+        <label>Guardian Work Address</label>
+        <textarea rows="2" readonly>{{ $application->data['guardian_work_address'] }}</textarea>
       </div>
       @endif
     </fieldset>
@@ -1557,7 +1648,8 @@ function addEmploymentRow() {
     <td><input type="text" name="employment[${idx}][company]" placeholder="e.g., ABC Ltd"></td>
     <td><input type="text" name="employment[${idx}][duration]" placeholder="e.g., Jan 2020 – Dec 2022"></td>
     <td>
-      <input type="file" id="employment_file_${idx}" name="employment[${idx}][file]" accept="application/pdf,image/*">
+      <input type="file" id="employment_file_${idx}" name="employment[${idx}][file]" accept="application/pdf,image/*" class="file-upload" data-max-size="1048576">
+      <small class="hint" style="display:block;margin-top:4px;">Max: 1MB</small>
       <button type="button" class="btn-link" onclick="previewEmploymentFile(${idx})">Preview</button>
       <div id="employment_preview_${idx}" class="preview-box"></div>
     </td>
@@ -1617,7 +1709,26 @@ document.addEventListener('DOMContentLoaded', function() {
   form.addEventListener('submit', function (e) {
     console.log('Form submit validation triggered');
     
-    // FIRST: Specifically validate Documents tab required files (Priority check)
+    // FIRST: Validate all file uploads for size (1MB = 1048576 bytes)
+    const allFileInputs = form.querySelectorAll('input[type="file"].file-upload');
+    for (let fileInput of allFileInputs) {
+      if (fileInput.files && fileInput.files.length > 0) {
+        const maxSize = parseInt(fileInput.getAttribute('data-max-size')) || 1048576;
+        for (let file of fileInput.files) {
+          if (file.size > maxSize) {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInput.style.outline = '2px solid #e53935';
+            setTimeout(() => fileInput.focus(), 100);
+            const sizeMB = (file.size / 1048576).toFixed(2);
+            alert(`File "${file.name}" is too large (${sizeMB}MB). Maximum allowed size is 1MB. Please choose a smaller file or compress it.`);
+            return false;
+          }
+        }
+      }
+    }
+    
+    // SECOND: Specifically validate Documents tab required files (Priority check)
     const ghanaCardFront = document.getElementById('ghana_card_front');
     const ghanaCardBack = document.getElementById('ghana_card_back');
     const passportPicture = document.getElementById('passport_picture');
@@ -1662,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // SECOND: Validate all tabs before submission
+    // THIRD: Validate all tabs before submission
     for (let i = 0; i < totalTabs; i++) {
       const tabContent = document.getElementById(['personal', 'education', 'programs', 'employment', 'documents'][i]);
       if (!tabContent) continue;
@@ -1716,6 +1827,99 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// Print Application Function
+function printApplication() {
+  // Hide the print button and chat widget before printing
+  const printBtn = event.target.closest('button');
+  const chatWidget = document.getElementById('tawkchat-container') || document.querySelector('.tawk-chat-widget') || document.querySelector('[id^="tawk"]');
+  
+  if (printBtn) printBtn.style.display = 'none';
+  if (chatWidget) chatWidget.style.display = 'none';
+  
+  // Print the page
+  window.print();
+  
+  // Restore after print
+  setTimeout(() => {
+    if (printBtn) printBtn.style.display = 'flex';
+    if (chatWidget) chatWidget.style.display = 'block';
+  }, 100);
+}
+
+// Add print-specific styles
+const style = document.createElement('style');
+style.textContent = `
+  @media print {
+    /* Hide unnecessary elements */
+    .alert, button, .btn-link, .inline-options, .tawk-chat-widget, [id^="tawk"] {
+      display: none !important;
+    }
+    
+    /* Remove margins and padding for print */
+    body {
+      margin: 0;
+      padding: 20px;
+      font-size: 12pt;
+    }
+    
+    /* Ensure proper page breaks */
+    fieldset {
+      page-break-inside: avoid;
+    }
+    
+    /* Make tables fit nicely */
+    table {
+      page-break-inside: auto;
+      width: 100%;
+    }
+    
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    
+    /* Hide file input fields but show uploaded file links */
+    input[type="file"] {
+      display: none !important;
+    }
+    
+    /* Show uploaded file links in print */
+    .mb-2 a {
+      display: inline-block !important;
+      color: #1a73e8 !important;
+      text-decoration: underline;
+      margin: 5px 0;
+    }
+    
+    /* Make readonly inputs look cleaner */
+    input[readonly], textarea[readonly] {
+      border: 1px solid #ddd !important;
+      background: white !important;
+    }
+    
+    /* Better heading styles */
+    h1 {
+      font-size: 18pt;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    legend {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    /* Adjust container for print */
+    .container {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+  }
+`;
+document.head.appendChild(style);
 </script>
 
 <!--Start of Tawk.to Script-->

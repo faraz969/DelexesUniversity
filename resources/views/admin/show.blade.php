@@ -154,7 +154,7 @@
   </div>
   @endif
 
-  <div class="card">
+  <div class="card" style="display: none;">
     <div class="card-header">Update Status</div>
     <div class="card-body">
       <form method="post" action="{{ route('admin.applications.updateStatus', $application->id) }}">

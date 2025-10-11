@@ -573,7 +573,7 @@ class PaymentController extends Controller
         try {
             // Primary: Try Nalo SMS API
             $naloKey = env('NALO_SMS_KEY', 'LNMKky07fqvxVO6IK33I7UvuWMVXDR_sZnf8bDRnG7qu2ErL3vTM1farB5UYw26L');
-            $naloSenderId = env('NALO_SENDER_ID', 'delexesuc');
+            $naloSenderId = env('NALO_SENDER_ID', 'DELEXESUC');
             
             Log::info('Attempting SMS via Nalo API', [
                 'phone' => $naloPhone,
