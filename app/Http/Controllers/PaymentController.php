@@ -211,6 +211,12 @@ class PaymentController extends Controller
 
                 // If API returns a checkout identifier only
                 $checkoutId = $data['checkOutId'] ?? $data['checkoutId'] ?? null;
+                session([
+                    'checkoutid' => $checkoutId
+                ]);
+                $sessioncheck=session('checkoutid');
+
+                Log::info('GCB Checkout ID', ['checkoutid' => $sessioncheck]);
                 if ($checkoutId) {
                     // Try building a hosted URL under the same prefix if applicable
                     $hostedUrl = 'https://epayuat.gcbltd.com:98/paymentgateway/checkout?id=' . $checkoutId;
@@ -219,6 +225,8 @@ class PaymentController extends Controller
                         'payment_url' => $hostedUrl,
                         'invoice_id' => $invoiceId,
                     ]);
+
+                   
                 }
 
                 // Fallback: unknown response
@@ -332,7 +340,7 @@ class PaymentController extends Controller
         $paymentMode = session('pending_registration.payment_mode');
         if ($paymentMode === 'gcb') {
             // GCB may return checkOutId or status in query params
-            $checkOutId = $request->get('checkOutId') ?? $request->get('id') ?? $request->get('transactionId');
+            $checkOutId = session('checkoutid');
             $statusParam = $request->get('statusCode') ?? $request->get('paymentStatus');
 
             Log::info('GCB Payment Return', [
@@ -346,7 +354,7 @@ class PaymentController extends Controller
                 $verifiedStatus = $this->checkGcbPaymentStatus($checkOutId);
                 Log::info('GCB Status Check Result', ['verified_status' => $verifiedStatus]);
 
-                if (!in_array(strtolower($verifiedStatus), ['paid', 'success', 'completed', 'successful'])) {
+                if (!in_array(strtolower($verifiedStatus), ['paid', 'success', 'completed', 'successful','00'])) {
                     return redirect()->route('payment.cancelled')
                         ->with('error', 'Payment was not completed. Status: ' . $verifiedStatus);
                 }
