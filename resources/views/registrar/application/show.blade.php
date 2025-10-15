@@ -20,7 +20,12 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3>Application Review - {{ $application->application_number }}</h3>
-                <a href="{{ route('registrar.dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-primary" onclick="printApplication()" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-print"></i> Print Application
+                    </button>
+                    <a href="{{ route('registrar.dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                </div>
             </div>
 
             @if(session('success'))
@@ -209,7 +214,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            @foreach($application->data['_files'] as $fieldName => $fileData)
+                        @foreach($application->data['_files'] as $fieldName => $fileData)
                                 @if(!empty($fileData))
                                     <div class="col-md-4 mb-3">
                                         <div class="card">
@@ -218,20 +223,28 @@
                                                 <p class="card-text small text-muted">
                                                     @if(is_array($fileData))
                                                         {{ count($fileData) }} file(s)
-                                                    @else
-                                                        {{ basename($fileData) }}
+                                                   
                                                     @endif
                                                 </p>
                                                 @if(is_array($fileData))
                                                     @foreach($fileData as $file)
                                                         @if(isset($file['file']))
                                                             <a href="{{ asset('storage/' . $file['file']) }}" target="_blank" class="btn btn-sm btn-primary mb-1">View File</a><br>
+                                                            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $file['file']))
+                                                                 <img src="{{ asset('storage/'.$file['file']) }}" alt="Official Transcript" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                                             @endif
                                                         @else
                                                             <a href="{{ asset('storage/' . $file) }}" target="_blank" class="btn btn-sm btn-primary mb-1">View File</a><br>
+                                                            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $file))
+                                                                 <img src="{{ asset('storage/'.$file) }}" alt="Official Transcript" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                                             @endif
                                                         @endif
                                                     @endforeach
                                                 @else
                                                     <a href="{{ asset('storage/' . $fileData) }}" target="_blank" class="btn btn-sm btn-primary">View File</a>
+                                                    @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $fileData))
+                                                                 <img src="{{ asset('storage/'.$fileData) }}" alt="Official Transcript" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                                             @endif
                                                 @endif
                                             </div>
                                         </div>
@@ -312,4 +325,96 @@
         </div>
     </div>
 </div>
+
+<script>
+// Print Application Function
+function printApplication() {
+  const printBtn = event.target.closest('button');
+  if (printBtn) printBtn.style.display = 'none';
+  
+  window.print();
+  
+  setTimeout(() => {
+    if (printBtn) printBtn.style.display = 'flex';
+  }, 100);
+}
+
+// Add print-specific styles
+const style = document.createElement('style');
+style.textContent = `
+  @media print {
+    .btn, button, .alert, nav, .navbar, .sidebar {
+      display: none !important;
+    }
+    
+    body {
+      margin: 0;
+      padding: 10px;
+      font-size: 11pt;
+    }
+    
+    .container, .row, .col-md-12 {
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    
+    .card {
+      page-break-inside: avoid;
+      border: 1px solid #ddd !important;
+      box-shadow: none !important;
+      margin-bottom: 10px !important;
+    }
+    
+    .card-body {
+      padding: 15px !important;
+    }
+    
+    .card-header {
+      background-color: #f8f9fa !important;
+      border-bottom: 1px solid #ddd !important;
+      padding: 10px 15px !important;
+    }
+    
+    h3, h5 {
+      page-break-after: avoid;
+      margin-top: 0 !important;
+      margin-bottom: 10px !important;
+    }
+    
+    .mb-4, .mb-3, .mb-2 {
+      margin-bottom: 10px !important;
+    }
+    
+    .d-flex {
+      display: block !important;
+    }
+    
+    img {
+      max-width: 250px !important;
+      max-height: 300px !important;
+      page-break-inside: avoid;
+      display: block !important;
+    }
+    
+    /* Hide file links in print - only show image previews */
+    a[href*="storage/"] {
+      display: none !important;
+    }
+    
+    /* Hide file sections that don't have images */
+    .mb-2:not(:has(img)) {
+      display: none !important;
+    }
+    
+    /* Remove extra spacing */
+    * {
+      page-break-before: auto !important;
+    }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
 @endsection

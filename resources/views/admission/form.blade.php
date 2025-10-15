@@ -728,6 +728,9 @@
           @if(!empty($submitted) && !empty($uploadedFiles['ghana_card_front']))
             <div class="mb-2">
               <a href="{{ asset('storage/'.$uploadedFiles['ghana_card_front']) }}" target="_blank">View uploaded file</a>
+              @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['ghana_card_front']))
+                <img src="{{ asset('storage/'.$uploadedFiles['ghana_card_front']) }}" alt="Ghana Card Front" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
             </div>
           @endif
           @if(empty($submitted))
@@ -740,6 +743,9 @@
           @if(!empty($submitted) && !empty($uploadedFiles['ghana_card_back']))
             <div class="mb-2">
               <a href="{{ asset('storage/'.$uploadedFiles['ghana_card_back']) }}" target="_blank">View uploaded file</a>
+              @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['ghana_card_back']))
+                <img src="{{ asset('storage/'.$uploadedFiles['ghana_card_back']) }}" alt="Ghana Card Back" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
             </div>
           @endif
           @if(empty($submitted))
@@ -762,6 +768,9 @@
           @if(!empty($submitted) && !empty($uploadedFiles['official_transcript']))
             <div class="mb-2">
               <a href="{{ asset('storage/'.$uploadedFiles['official_transcript']) }}" target="_blank">View uploaded file</a>
+              @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['official_transcript']))
+                <img src="{{ asset('storage/'.$uploadedFiles['official_transcript']) }}" alt="Official Transcript" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
             </div>
           @endif
           @if(empty($submitted))
@@ -784,6 +793,9 @@
           @if(!empty($submitted) && !empty($uploadedFiles['passport_picture']))
             <div class="mb-2">
               <a href="{{ asset('storage/'.$uploadedFiles['passport_picture']) }}" target="_blank">View uploaded file</a>
+              @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['passport_picture']))
+                <img src="{{ asset('storage/'.$uploadedFiles['passport_picture']) }}" alt="Passport Picture" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
             </div>
           @endif
           @if(empty($submitted))
@@ -806,7 +818,12 @@
           @if(!empty($submitted) && !empty($uploadedFiles['other_academic_records']) && is_array($uploadedFiles['other_academic_records']))
             <div class="mb-2">
               @foreach($uploadedFiles['other_academic_records'] as $path)
-                <div><a href="{{ asset('storage/'.$path) }}" target="_blank">View file</a></div>
+                <div style="margin-bottom: 15px;">
+                  <a href="{{ asset('storage/'.$path) }}" target="_blank">View file</a>
+                  @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $path))
+                    <img src="{{ asset('storage/'.$path) }}" alt="Academic Record" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                  @endif
+                </div>
               @endforeach
             </div>
           @endif
@@ -1125,7 +1142,10 @@
         <div>
           <label>Ghana Card (Front)</label>
           @if(!empty($uploadedFiles['ghana_card_front']))
-            <a target="_blank" href="{{ asset('storage/'.$uploadedFiles['ghana_card_front']) }}">View</a>
+            
+            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['ghana_card_front']))
+                <img src="{{ asset('storage/'.$uploadedFiles['ghana_card_front']) }}" alt="Ghana Card Front" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
       @else
             <span class="hint">Not uploaded</span>
       @endif
@@ -1133,7 +1153,10 @@
         <div>
           <label>Ghana Card (Back)</label>
           @if(!empty($uploadedFiles['ghana_card_back']))
-            <a target="_blank" href="{{ asset('storage/'.$uploadedFiles['ghana_card_back']) }}">View</a>
+           
+            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['ghana_card_back']))
+                <img src="{{ asset('storage/'.$uploadedFiles['ghana_card_back']) }}" alt="Ghana Card Back" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
           @else
             <span class="hint">Not uploaded</span>
           @endif
@@ -1142,6 +1165,9 @@
           <label>Official Transcript</label>
           @if(!empty($uploadedFiles['official_transcript']))
             <a target="_blank" href="{{ asset('storage/'.$uploadedFiles['official_transcript']) }}">View</a>
+            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['official_transcript']))
+                <img src="{{ asset('storage/'.$uploadedFiles['official_transcript']) }}" alt="Official Transcript" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
           @else
             <span class="hint">Not uploaded</span>
           @endif
@@ -1149,7 +1175,10 @@
         <div>
           <label>Passport Picture</label>
           @if(!empty($uploadedFiles['passport_picture']))
-            <a target="_blank" href="{{ asset('storage/'.$uploadedFiles['passport_picture']) }}">View</a>
+           
+            @if(preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $uploadedFiles['passport_picture']))
+                <img src="{{ asset('storage/'.$uploadedFiles['passport_picture']) }}" alt="Passport Picture" style="max-width: 100%; margin-top: 10px; border: 1px solid #ddd; border-radius: 4px;">
+              @endif
           @else
             <span class="hint">Not uploaded</span>
           @endif
@@ -1879,17 +1908,28 @@ style.textContent = `
       page-break-after: auto;
     }
     
-    /* Hide file input fields but show uploaded file links */
+    /* Hide file input fields */
     input[type="file"] {
       display: none !important;
     }
     
-    /* Show uploaded file links in print */
+    /* Show uploaded file previews */
+    .mb-2 {
+      display: block !important;
+      margin: 10px 0;
+    }
+    
     .mb-2 a {
-      display: inline-block !important;
-      color: #1a73e8 !important;
-      text-decoration: underline;
-      margin: 5px 0;
+      display: none !important;
+    }
+    
+    /* Show images in print */
+    .mb-2 img {
+      display: block !important;
+      max-width: 300px;
+      max-height: 400px;
+      border: 1px solid #ddd;
+      margin: 10px 0;
     }
     
     /* Make readonly inputs look cleaner */

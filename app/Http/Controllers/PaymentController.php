@@ -565,11 +565,11 @@ class PaymentController extends Controller
      */
     private function sendSMS($phone, $pin, $name, $serialNumber)
     {
-        $message = "Hello {$name}, your registration Serial Number is: {$serialNumber} and PIN is: {$pin}. This PIN expires in 3 months. Use this PIN to login to your dashboard.";
-        
-        // Clean phone number (remove any non-numeric characters except +)
-        $cleanPhone = preg_replace('/[^0-9+]/', '', $phone);
-        
+            $message = "Hello {$name}, your registration Serial Number is: {$serialNumber} and PIN is: {$pin}. This PIN expires in 3 months. Use this PIN to login to your dashboard.";
+            
+            // Clean phone number (remove any non-numeric characters except +)
+            $cleanPhone = preg_replace('/[^0-9+]/', '', $phone);
+            
         // Convert to format without + for Nalo (e.g., +233249318768 -> 0249318768)
         $naloPhone = $cleanPhone;
         if (strpos($cleanPhone, '+233') === 0) {
@@ -639,12 +639,12 @@ class PaymentController extends Controller
             
             $arkeselResponse = Http::timeout(10)
                 ->get('https://sms.arkesel.com/sms/api', [
-                    'action' => 'send-sms',
+                'action' => 'send-sms',
                     'api_key' => $arkeselApiKey,
-                    'to' => $cleanPhone,
+                'to' => $cleanPhone,
                     'from' => $arkeselSenderId,
-                    'sms' => $message
-                ]);
+                'sms' => $message
+            ]);
 
             // Log the response for debugging
             Log::info('Arkesel SMS API Response (Backup)', [
