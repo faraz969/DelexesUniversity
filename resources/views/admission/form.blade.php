@@ -168,6 +168,53 @@
             if (other) other.addEventListener('input', () => { syncFull(); autosaveDraft(); });
             syncFull();
           });
+
+          // Auto-calculate age from Date of Birth
+          document.addEventListener('DOMContentLoaded', function(){
+            const dobField = document.getElementById('dob');
+            const ageField = document.getElementById('age');
+            
+            function calculateAge(dateOfBirth) {
+              if (!dateOfBirth) return '';
+              
+              const today = new Date();
+              const birthDate = new Date(dateOfBirth);
+              
+              // Check if the date is valid
+              if (isNaN(birthDate.getTime())) return '';
+              
+              let age = today.getFullYear() - birthDate.getFullYear();
+              const monthDiff = today.getMonth() - birthDate.getMonth();
+              
+              // If birthday hasn't occurred this year yet, subtract 1
+              if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+              }
+              
+              // Ensure age is not negative
+              return age >= 0 ? age : '';
+            }
+            
+            function updateAge() {
+              if (dobField && ageField) {
+                const calculatedAge = calculateAge(dobField.value);
+                if (calculatedAge !== '') {
+                  ageField.value = calculatedAge;
+                  autosaveDraft(); // Auto-save when age is calculated
+                }
+              }
+            }
+            
+            if (dobField) {
+              dobField.addEventListener('change', updateAge);
+              dobField.addEventListener('input', updateAge);
+              
+              // Calculate age on page load if DOB is already filled
+              if (dobField.value) {
+                updateAge();
+              }
+            }
+          });
         </script>
         @php
           $prefillFullName = trim($prefill['full_name'] ?? '');
