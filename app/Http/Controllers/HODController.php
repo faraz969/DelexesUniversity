@@ -18,23 +18,25 @@ class HODController extends Controller
             return redirect()->route('admin.dashboard')->with('error', 'No department assigned to your account.');
         }
 
-        // Get applications for this department that are pending HOD review
+        // Get applications for this department that are pending HOD review (exclude drafts)
         $pendingApplications = Application::with(['user', 'department'])
             ->where(function($query) use ($department) {
                 $query->where('department_id', $department->id)
                       ->orWhereJsonContains('department_ids', $department->id);
             })
             ->where('hod_status', 'pending')
+            ->where('status', '!=', 'draft')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get applications that have been reviewed by HOD
+        // Get applications that have been reviewed by HOD (exclude drafts)
         $reviewedApplications = Application::with(['user', 'department'])
             ->where(function($query) use ($department) {
                 $query->where('department_id', $department->id)
                       ->orWhereJsonContains('department_ids', $department->id);
             })
             ->whereIn('hod_status', ['approved', 'rejected'])
+            ->where('status', '!=', 'draft')
             ->orderBy('hod_reviewed_at', 'desc')
             ->get();
 
@@ -44,6 +46,11 @@ class HODController extends Controller
     public function showApplication(Application $application)
     {
         $user = Auth::user();
+        
+        // Prevent HOD from viewing draft applications
+        if ($application->status === 'draft') {
+            abort(403, 'You cannot view draft applications.');
+        }
         
         // Ensure HOD can only view applications from their department
         if (!$application->belongsToDepartment($user->department_id)) {
@@ -61,6 +68,11 @@ class HODController extends Controller
     public function approveApplication(Request $request, Application $application)
     {
         $user = Auth::user();
+        
+        // Prevent HOD from approving draft applications
+        if ($application->status === 'draft') {
+            abort(403, 'You cannot approve draft applications.');
+        }
         
         // Ensure HOD can only approve applications from their department
         if (!$application->belongsToDepartment($user->department_id)) {
@@ -87,6 +99,11 @@ class HODController extends Controller
     public function rejectApplication(Request $request, Application $application)
     {
         $user = Auth::user();
+        
+        // Prevent HOD from rejecting draft applications
+        if ($application->status === 'draft') {
+            abort(403, 'You cannot reject draft applications.');
+        }
         
         // Ensure HOD can only reject applications from their department
         if (!$application->belongsToDepartment($user->department_id)) {

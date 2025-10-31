@@ -415,13 +415,13 @@
       <legend>Enrollment Options</legend>
       <div class="row two">
         <div>
-          <label>Applicant Type (tick all that apply)</label>
-          <div class="inline-options">
-            <label><input type="checkbox" name="entry_wassce" {{ !empty($prefill['entry_wassce']) ? 'checked' : '' }} /> WASSCE</label>
-            <label><input type="checkbox" name="entry_sssce" {{ !empty($prefill['entry_sssce']) ? 'checked' : '' }} /> SSSCE</label>        
-            <label><input type="checkbox" name="entry_ib" {{ !empty($prefill['entry_ib']) ? 'checked' : '' }} /> International Baccalaureate</label>
-            <label><input type="checkbox" name="entry_transfer" {{ !empty($prefill['entry_transfer']) ? 'checked' : '' }} /> Transfer</label>
-            <label><input type="checkbox" name="entry_other" {{ !empty($prefill['entry_other']) ? 'checked' : '' }} /> Other</label>
+          <label>Applicant Type (tick all that apply) <span style="color:red">*</span></label>
+          <div class="inline-options" id="applicantTypeGroup">
+            <label><input type="checkbox" name="entry_wassce" class="applicant-type-checkbox" {{ !empty($prefill['entry_wassce']) ? 'checked' : '' }} /> WASSCE</label>
+            <label><input type="checkbox" name="entry_sssce" class="applicant-type-checkbox" {{ !empty($prefill['entry_sssce']) ? 'checked' : '' }} /> SSSCE</label>        
+            <label><input type="checkbox" name="entry_ib" class="applicant-type-checkbox" {{ !empty($prefill['entry_ib']) ? 'checked' : '' }} /> International Baccalaureate</label>
+            <label><input type="checkbox" name="entry_transfer" class="applicant-type-checkbox" {{ !empty($prefill['entry_transfer']) ? 'checked' : '' }} /> Transfer</label>
+            <label><input type="checkbox" name="entry_other" class="applicant-type-checkbox" {{ !empty($prefill['entry_other']) ? 'checked' : '' }} /> Other</label>
           </div>
         </div>
         <div>
@@ -1314,6 +1314,35 @@ function validateCurrentTab() {
   const currentTabContent = document.querySelector('.tab-content.active');
   const requiredFields = currentTabContent.querySelectorAll('input[required], select[required], textarea[required]');
   
+  // Special validation for Education tab - Applicant Type must have at least one checkbox selected
+  if (currentTab === 1) { // Education tab
+    const applicantTypeCheckboxes = document.querySelectorAll('.applicant-type-checkbox');
+    const atLeastOneChecked = Array.from(applicantTypeCheckboxes).some(cb => cb.checked);
+    
+    if (!atLeastOneChecked) {
+      const applicantTypeGroup = document.getElementById('applicantTypeGroup');
+      if (applicantTypeGroup) {
+        applicantTypeGroup.style.outline = '2px solid #e53935';
+        applicantTypeGroup.style.borderRadius = '4px';
+        applicantTypeGroup.style.padding = '4px';
+        setTimeout(() => {
+          const firstCheckbox = applicantTypeCheckboxes[0];
+          if (firstCheckbox) firstCheckbox.focus();
+        }, 100);
+      }
+      alert('Please select at least one Applicant Type (WASSCE, SSSCE, International Baccalaureate, Transfer, or Other). This field is required.');
+      return false;
+    } else {
+      // Remove error styling if validation passes
+      const applicantTypeGroup = document.getElementById('applicantTypeGroup');
+      if (applicantTypeGroup) {
+        applicantTypeGroup.style.outline = '';
+        applicantTypeGroup.style.borderRadius = '';
+        applicantTypeGroup.style.padding = '';
+      }
+    }
+  }
+  
   for (let field of requiredFields) {
     if (!field.value.trim()) {
       field.focus();
@@ -1354,12 +1383,35 @@ function updateTabCompletionStatus() {
         // Programs considered completed only if at least one program dropdown has a non-empty value
         const selects = tabContent.querySelectorAll('select');
         completed = Array.from(selects).some(s => String(s.value || '').trim().length > 0);
+      } else if (tabId === 'education') {
+        // Education tab: Must have at least one applicant type checkbox selected
+        const applicantTypeCheckboxes = document.querySelectorAll('.applicant-type-checkbox');
+        const atLeastOneChecked = Array.from(applicantTypeCheckboxes).some(cb => cb.checked);
+        
+        // Also check if there are any other fields filled
+        const anyFields = tabContent.querySelectorAll('input, select, textarea');
+        const hasOtherFields = Array.from(anyFields).some(f => {
+          if (f.classList && f.classList.contains('applicant-type-checkbox')) return false; // Skip applicant type checkboxes
+          if (f.type === 'checkbox' || f.type === 'radio') return f.checked;
+          return String(f.value || '').trim().length > 0;
+        });
+        
+        completed = atLeastOneChecked && hasOtherFields;
       } else {
         const anyFields = tabContent.querySelectorAll('input, select, textarea');
         completed = Array.from(anyFields).some(f => {
           if (f.type === 'checkbox' || f.type === 'radio') return f.checked;
           return String(f.value || '').trim().length > 0;
         });
+      }
+    }
+    
+    // Special check: Education tab must have at least one applicant type selected
+    if (button.dataset.tab === 'education') {
+      const applicantTypeCheckboxes = document.querySelectorAll('.applicant-type-checkbox');
+      const atLeastOneChecked = Array.from(applicantTypeCheckboxes).some(cb => cb.checked);
+      if (!atLeastOneChecked) {
+        completed = false;
       }
     }
 
@@ -1393,6 +1445,23 @@ document.getElementById('sideNavList').addEventListener('click', function(e){
 // Field change handlers for completion status
 document.addEventListener('input', updateTabCompletionStatus);
 document.addEventListener('change', updateTabCompletionStatus);
+
+// Clear error styling when applicant type checkbox is selected
+document.addEventListener('DOMContentLoaded', function() {
+  const applicantTypeCheckboxes = document.querySelectorAll('.applicant-type-checkbox');
+  applicantTypeCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const applicantTypeGroup = document.getElementById('applicantTypeGroup');
+      if (applicantTypeGroup && Array.from(applicantTypeCheckboxes).some(cb => cb.checked)) {
+        // Clear error styling if at least one checkbox is selected
+        applicantTypeGroup.style.outline = '';
+        applicantTypeGroup.style.borderRadius = '';
+        applicantTypeGroup.style.padding = '';
+      }
+      autosaveDraft(); // Auto-save when checkbox changes
+    });
+  });
+});
 
 // Initialize tabs
 showTab(0);
@@ -1853,6 +1922,31 @@ document.addEventListener('DOMContentLoaded', function() {
     for (let i = 0; i < totalTabs; i++) {
       const tabContent = document.getElementById(['personal', 'education', 'programs', 'employment', 'documents'][i]);
       if (!tabContent) continue;
+      
+      // Special validation for Education tab - Applicant Type must have at least one checkbox selected
+      if (i === 1) { // Education tab
+        const applicantTypeCheckboxes = document.querySelectorAll('.applicant-type-checkbox');
+        const atLeastOneChecked = Array.from(applicantTypeCheckboxes).some(cb => cb.checked);
+        
+        if (!atLeastOneChecked) {
+          e.preventDefault();
+          e.stopPropagation();
+          currentTab = 1; // Education tab
+          showTab(currentTab);
+          const applicantTypeGroup = document.getElementById('applicantTypeGroup');
+          if (applicantTypeGroup) {
+            applicantTypeGroup.style.outline = '2px solid #e53935';
+            applicantTypeGroup.style.borderRadius = '4px';
+            applicantTypeGroup.style.padding = '4px';
+          }
+          setTimeout(() => {
+            const firstCheckbox = applicantTypeCheckboxes[0];
+            if (firstCheckbox) firstCheckbox.focus();
+          }, 100);
+          alert('Please select at least one Applicant Type (WASSCE, SSSCE, International Baccalaureate, Transfer, or Other). This field is required.');
+          return false;
+        }
+      }
       
       const requiredFields = tabContent.querySelectorAll('input[required], select[required], textarea[required]');
       
