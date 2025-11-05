@@ -16,6 +16,7 @@
                     <th>Application #</th>
                     <th>Academic Year</th>
                     <th>Form Type</th>
+                    <th>Qualification</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -29,13 +30,28 @@
                         <td>{{ $app->application_number }}</td>
                         <td>{{ $app->academic_year }}</td>
                         <td>{{ ucfirst($app->form_type) }}</td>
+                        <td>
+                            @php
+                                $qualifiedPrograms = $app->getQualifiedPrograms();
+                            @endphp
+                            @if($qualifiedPrograms->isNotEmpty())
+                                <span class="badge bg-success">Qualified</span>
+                                <div class="mt-1">
+                                    @foreach($qualifiedPrograms as $program)
+                                        <small class="d-block text-muted">{{ $program->name }}</small>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="badge bg-danger">Unqualified</span>
+                            @endif
+                        </td>
                         <td><span class="badge bg-secondary">{{ ucfirst(str_replace('_',' ',$app->status)) }}</span></td>
                         <td>
                             <a class="btn btn-sm btn-primary" href="{{ route('admin.applications.show', $app->id) }}">View</a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center">No applications yet</td></tr>
+                    <tr><td colspan="9" class="text-center">No applications yet</td></tr>
                 @endforelse
             </tbody>
         </table>

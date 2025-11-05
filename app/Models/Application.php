@@ -53,6 +53,11 @@ class Application extends Model
         return $this->hasOne(AdmissionForm::class);
     }
 
+    public function examRecords()
+    {
+        return $this->hasMany(ExamRecord::class);
+    }
+
     /**
      * Check if this application belongs to a specific department
      */
@@ -217,5 +222,122 @@ class Application extends Model
         }
         
         $this->save();
+    }
+
+    /**
+     * Calculate total Best 6 grade points for this application
+     */
+    public function getTotalBest6()
+    {
+        $examRecords = $this->examRecords()->with('subjects')->get();
+        $totalBest6 = 0;
+
+        foreach ($examRecords as $examRecord) {
+            // Get all subjects marked as best 6 for this exam record
+            $best6Subjects = $examRecord->subjects->where('is_best_six', true)->take(6);
+            $totalBest6 += $best6Subjects->sum('grade_number');
+        }
+
+        return $totalBest6;
+    }
+
+    /**
+     * Get all selected programs from application data
+     */
+    public function getSelectedPrograms()
+    {
+        $programs = [];
+        $data = $this->data ?? [];
+
+        // Get all programs from database
+        $allPrograms = \App\Models\Program::with('department')->get();
+
+        // Check each program field in application data
+        foreach ($data as $key => $value) {
+            if (strpos($key, 'prog_') === 0 && !empty($value) && strpos($key, '_mode') === false) {
+                // Find matching program by name
+                $program = $allPrograms->firstWhere('name', $value);
+                if ($program) {
+                    $programs[] = $program;
+                }
+            }
+        }
+
+        return collect($programs);
+    }
+
+    /**
+     * Check if application is qualified based on cut off grades
+     * Returns true if ANY selected program qualifies (total best 6 <= cut off grade)
+     */
+    public function isQualified()
+    {
+        $totalBest6 = $this->getTotalBest6();
+        
+        // If no exam records or total is 0, consider unqualified
+        if ($totalBest6 === 0) {
+            return false;
+        }
+
+        $selectedPrograms = $this->getSelectedPrograms();
+
+        // If no programs selected, consider unqualified
+        if ($selectedPrograms->isEmpty()) {
+            return false;
+        }
+
+        // Check each program: if ANY program qualifies, return true
+        foreach ($selectedPrograms as $program) {
+            // If cut_off_grade is null, skip this program
+            if ($program->cut_off_grade === null) {
+                continue;
+            }
+
+            // Qualified if total best 6 <= cut off grade
+            if ($totalBest6 <= $program->cut_off_grade) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get programs for which this application is qualified
+     * Returns collection of Program models
+     */
+    public function getQualifiedPrograms()
+    {
+        $totalBest6 = $this->getTotalBest6();
+        
+        // If no exam records or total is 0, return empty collection
+        if ($totalBest6 === 0) {
+            return collect([]);
+        }
+
+        $selectedPrograms = $this->getSelectedPrograms();
+        $qualifiedPrograms = [];
+
+        foreach ($selectedPrograms as $program) {
+            // If cut_off_grade is null, skip this program
+            if ($program->cut_off_grade === null) {
+                continue;
+            }
+
+            // Qualified if total best 6 <= cut off grade
+            if ($totalBest6 <= $program->cut_off_grade) {
+                $qualifiedPrograms[] = $program;
+            }
+        }
+
+        return collect($qualifiedPrograms);
+    }
+
+    /**
+     * Get qualification status display
+     */
+    public function getQualificationStatusAttribute()
+    {
+        return $this->isQualified() ? 'qualified' : 'unqualified';
     }
 }

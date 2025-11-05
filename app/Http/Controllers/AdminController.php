@@ -11,7 +11,7 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        $applications = Application::with(['user'])->latest()->paginate(20);
+        $applications = Application::with(['user', 'examRecords.subjects'])->latest()->paginate(20);
         return view('admin.dashboard', compact('applications'));
     }
 

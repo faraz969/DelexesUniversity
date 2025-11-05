@@ -19,7 +19,7 @@ class HODController extends Controller
         }
 
         // Get applications for this department that are pending HOD review (exclude drafts)
-        $pendingApplications = Application::with(['user', 'department'])
+        $pendingApplications = Application::with(['user', 'department', 'examRecords.subjects'])
             ->where(function($query) use ($department) {
                 $query->where('department_id', $department->id)
                       ->orWhereJsonContains('department_ids', $department->id);
@@ -30,7 +30,7 @@ class HODController extends Controller
             ->get();
 
         // Get applications that have been reviewed by HOD (exclude drafts)
-        $reviewedApplications = Application::with(['user', 'department'])
+        $reviewedApplications = Application::with(['user', 'department', 'examRecords.subjects'])
             ->where(function($query) use ($department) {
                 $query->where('department_id', $department->id)
                       ->orWhereJsonContains('department_ids', $department->id);

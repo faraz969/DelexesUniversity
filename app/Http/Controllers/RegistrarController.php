@@ -12,7 +12,7 @@ class RegistrarController extends Controller
     public function dashboard()
     {
         // Get all applications that can be reviewed by registrar (hod_status = approved, exclude drafts)
-        $pendingApplications = Application::with(['user', 'department'])
+        $pendingApplications = Application::with(['user', 'department', 'examRecords.subjects'])
             ->where('hod_status', 'approved')
             ->where('registrar_status', 'pending')
             ->where('status', '!=', 'draft')
@@ -20,14 +20,14 @@ class RegistrarController extends Controller
             ->get();
 
         // Get all applications that have been reviewed by registrar (exclude drafts)
-        $reviewedApplications = Application::with(['user', 'department'])
+        $reviewedApplications = Application::with(['user', 'department', 'examRecords.subjects'])
             ->whereIn('registrar_status', ['approved', 'rejected'])
             ->where('status', '!=', 'draft')
             ->orderBy('registrar_reviewed_at', 'desc')
             ->get();
 
         // Get all applications for overview (registrar can see all, but exclude drafts)
-        $allApplications = Application::with(['user', 'department'])
+        $allApplications = Application::with(['user', 'department', 'examRecords.subjects'])
             ->where('status', '!=', 'draft')
             ->orderBy('created_at', 'desc')
             ->get();

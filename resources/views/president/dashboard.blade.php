@@ -28,6 +28,7 @@
                             <th>Application #</th>
                             <th>Academic Year</th>
                             <th>Form Type</th>
+                            <th>Qualification</th>
                             <th>Department</th>
                             <th>Registrar Status</th>
                             <th>Actions</th>
@@ -42,6 +43,21 @@
                                 <td>{{ $app->application_number }}</td>
                                 <td>{{ $app->academic_year }}</td>
                                 <td>{{ ucfirst($app->form_type) }}</td>
+                                <td>
+                                    @php
+                                        $qualifiedPrograms = $app->getQualifiedPrograms();
+                                    @endphp
+                                    @if($qualifiedPrograms->isNotEmpty())
+                                        <span class="badge bg-success">Qualified</span>
+                                        <div class="mt-1">
+                                            @foreach($qualifiedPrograms as $program)
+                                                <small class="d-block text-muted">{{ $program->name }}</small>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="badge bg-danger">Unqualified</span>
+                                    @endif
+                                </td>
                                 <td>{{ $app->department->name ?? '-' }}</td>
                                 <td>{{ ucfirst($app->registrar_status ?? '-') }}</td>
                                 <td>

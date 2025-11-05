@@ -12,7 +12,7 @@ class PresidentController extends Controller
     public function dashboard()
     {
         // Show all applications to the President (exclude drafts)
-        $applications = Application::with(['user', 'department'])
+        $applications = Application::with(['user', 'department', 'examRecords.subjects'])
             ->where('status', '!=', 'draft')
             ->latest()
             ->paginate(25);
