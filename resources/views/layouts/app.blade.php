@@ -74,6 +74,9 @@
                                         <li><a class="dropdown-item" href="{{ route('admin.form-types.index') }}">
                                             <i class="fas fa-file-alt"></i> Form Types
                                         </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('waec.search') }}">
+                                            <i class="fas fa-file-signature"></i> WAEC Results Lookup
+                                        </a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="{{ route('admin.departments.create') }}">
                                             <i class="fas fa-plus"></i> Add Department

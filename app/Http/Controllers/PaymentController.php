@@ -134,10 +134,10 @@ class PaymentController extends Controller
         if ($selectedPaymentMode === 'gcb') {
             try {
                 // Build GCB Checkout request
-                $gcbApiKey = env('GCB_API_KEY', 'GCB-5u71RtOnW8pxMweww5WhKuqxSkFWGW8N');
+                $gcbApiKey = env('GCB_API_KEY', 'GCB-Cp98RM7YKey6JUlMyzk1uQALX7IkhQuC');
                 $maskedKey = substr($gcbApiKey, 0, 6) . '...' . substr($gcbApiKey, -4);
                 // Use provided base URL for GCB UAT, configurable via env
-                $gcbBaseUrl = rtrim(env('GCB_BASE_URL', 'https://epayuat.gcbltd.com:98/paymentgatewayapi'), '/');
+                $gcbBaseUrl = rtrim(env('GCB_BASE_URL', 'https://epay.gcbltd.com:211/'), '/');
                 $gcbCheckoutUrl = $gcbBaseUrl . '/checkout';
 
                 $payload = [
@@ -219,7 +219,7 @@ class PaymentController extends Controller
                 Log::info('GCB Checkout ID', ['checkoutid' => $sessioncheck]);
                 if ($checkoutId) {
                     // Try building a hosted URL under the same prefix if applicable
-                    $hostedUrl = 'https://epayuat.gcbltd.com:98/paymentgateway/checkout?id=' . $checkoutId;
+                    $hostedUrl = 'https://epay.gcbltd.com:211/checkout?id=' . $checkoutId;
                     return response()->json([
                         'success' => true,
                         'payment_url' => $hostedUrl,
@@ -447,8 +447,8 @@ class PaymentController extends Controller
     private function checkGcbPaymentStatus($checkOutId)
     {
         try {
-            $gcbApiKey = env('GCB_API_KEY', 'GCB-5u71RtOnW8pxMweww5WhKuqxSkFWGW8N');
-            $gcbBaseUrl = rtrim(env('GCB_BASE_URL', 'https://epayuat.gcbltd.com:98/paymentgatewayapi'), '/');
+            $gcbApiKey = env('GCB_API_KEY', 'GCB-Cp98RM7YKey6JUlMyzk1uQALX7IkhQuC');
+            $gcbBaseUrl = rtrim(env('GCB_BASE_URL', 'https://epay.gcbltd.com:211'), '/');
             $statusUrl = $gcbBaseUrl . '/transactions/' . $checkOutId . '/status';
 
             Log::info('Checking GCB Payment Status', [

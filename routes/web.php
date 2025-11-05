@@ -96,4 +96,12 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::post('/application/submit', [DashboardController::class, 'applicationSubmit'])->name('application.submit');
     Route::get('/application/print', [DashboardController::class, 'applicationPrint'])->name('application.print');
     Route::get('/results', [DashboardController::class, 'results'])->name('results');
+    Route::post('/waec/fetch', [\App\Http\Controllers\WaecController::class, 'fetchResults'])->name('waec.fetch');
+});
+
+// Staff WAEC utilities (Admin, HOD, Registrar, President)
+Route::middleware(['auth', 'staff'])->prefix('waec')->name('waec.')->group(function () {
+    Route::get('/search', [\App\Http\Controllers\WaecController::class, 'searchForm'])->name('search');
+    Route::post('/fetch', [\App\Http\Controllers\WaecController::class, 'fetchResults'])->name('fetch');
+    Route::get('/export', [\App\Http\Controllers\WaecController::class, 'exportCsv'])->name('export');
 });

@@ -452,7 +452,19 @@
               <div class="row four">
         <div>
                   <label>Exam Type</label>
-                  <input type="text" class="exam_type" placeholder="Eg. WASSCE" />
+                  <select class="exam_type">
+                    <option value="">-- Select --</option>
+                    <option value="1">WASSCE School</option>
+                    <option value="2">WASSCE Private</option>
+                    <option value="3">BECE School</option>
+                    <option value="4">BECE Private</option>
+                    <option value="5">SSCE School</option>
+                    <option value="6">SSCE Private</option>
+                    <option value="7">School ABCE</option>
+                    <option value="8">School GBCE</option>
+                    <option value="9">Private ABCE</option>
+                    <option value="10">Private GBCE</option>
+                  </select>
         </div>
         <div>
                   <label>Sitting Exam</label>
@@ -464,8 +476,11 @@
         </div>
                 <div>
                   <label>Index Number</label>
-                  <input type="text" class="index_number" placeholder="0010408006" />
-      </div>
+                  <div class="inline-options" style="gap:8px; align-items:end;">
+                    <input type="text" class="index_number" placeholder="0010408006" style="flex:1;" />
+                    <button type="button" class="btn-link fetch_waec_btn" title="Fetch WAEC Results">Fetch</button>
+                  </div>
+                </div>
               </div>
 
               <div style="margin-top:12px;">
@@ -709,7 +724,19 @@
               <div class="row four">
                 <div>
                   <label>Exam Type</label>
-                  <input type="text" class="exam_type" placeholder="Eg. WASSCE" />
+                  <select class="exam_type">
+                    <option value="">-- Select --</option>
+                    <option value="1">WASSCE School</option>
+                    <option value="2">WASSCE Private</option>
+                    <option value="3">BECE School</option>
+                    <option value="4">BECE Private</option>
+                    <option value="5">SSCE School</option>
+                    <option value="6">SSCE Private</option>
+                    <option value="7">School ABCE</option>
+                    <option value="8">School GBCE</option>
+                    <option value="9">Private ABCE</option>
+                    <option value="10">Private GBCE</option>
+                  </select>
                 </div>
                 <div>
                   <label>Sitting Exam</label>
@@ -721,7 +748,10 @@
                 </div>
                 <div>
                   <label>Index Number</label>
-                  <input type="text" class="index_number" placeholder="0010408006" />
+                  <div class="inline-options" style="gap:8px; align-items:end;">
+                    <input type="text" class="index_number" placeholder="0010408006" style="flex:1;" />
+                    <button type="button" class="btn-link fetch_waec_btn" title="Fetch WAEC Results">Fetch</button>
+                  </div>
                 </div>
               </div>
 
@@ -1633,6 +1663,71 @@ function autosaveDraft() {
 
     // Bind add subject button
     sectionEl.querySelector('.addSubjectBtn').addEventListener('click', () => addSubjectRow(sectionEl));
+
+    // Bind WAEC fetch button
+    const fetchBtn = sectionEl.querySelector('.fetch_waec_btn');
+    if (fetchBtn) {
+      fetchBtn.addEventListener('click', async () => {
+        const examTypeEl = sectionEl.querySelector('.exam_type');
+        const examYearEl = sectionEl.querySelector('.exam_year');
+        const indexEl = sectionEl.querySelector('.index_number');
+        const examtype = (examTypeEl && examTypeEl.value) ? String(examTypeEl.value).trim() : '';
+        const examyear = (examYearEl && examYearEl.value) ? String(examYearEl.value).trim() : '';
+        const cindex = (indexEl && indexEl.value) ? String(indexEl.value).trim() : '';
+        if (!examtype || !examyear || !cindex) {
+          alert('Please select Exam Type, enter Year and Index Number before fetching.');
+          return;
+        }
+        fetchBtn.disabled = true;
+        fetchBtn.textContent = 'Fetching...';
+        try {
+          const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+          const res = await fetch('{{ route('portal.waec.fetch') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            body: JSON.stringify({ cindex, examyear, examtype: Number(examtype) })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error((data && (data.message || data.error)) ? (data.message || 'Failed') : 'Failed to fetch results');
+          }
+          const ok = data && data.reqstatus && Number(data.reqstatus.msgcode) === 0 && Array.isArray(data.resultdetails);
+          if (!ok) {
+            alert('No results found or verification failed. You can fill subjects manually.');
+            return;
+          }
+          // Clear existing subject rows
+          const tbody = sectionEl.querySelector('.subjectsBody');
+          if (tbody) tbody.innerHTML = '';
+          // Add rows from resultdetails
+          function mapWaecLetterToNumber(letter) {
+            if (!letter) return '';
+            const t = String(letter).trim().toUpperCase();
+            const map = { 'A1':1, 'B2':2, 'B3':3, 'C4':4, 'C5':5, 'C6':6, 'D7':7, 'E8':8, 'F9':9 };
+            return map[t] ?? '';
+          }
+          data.resultdetails.forEach((row) => {
+            addSubjectRow(sectionEl);
+            const lastRow = sectionEl.querySelector('.subjectsBody tr:last-child');
+            if (!lastRow) return;
+            const subjectInput = lastRow.querySelector('.subject_input');
+            const letterInput = lastRow.querySelector('.grade_letter_input');
+            const numberInput = lastRow.querySelector('.grade_number_input');
+            if (subjectInput) subjectInput.value = row.subject || '';
+            if (letterInput) letterInput.value = row.grade || '';
+            if (numberInput) numberInput.value = mapWaecLetterToNumber(row.grade);
+          });
+          computeBest6Total(sectionEl);
+          autosaveDraft();
+          alert('WAEC results fetched successfully. Please review and complete any missing fields.');
+        } catch (e) {
+          alert('Error fetching results. You can fill subjects manually.');
+        } finally {
+          fetchBtn.disabled = false;
+          fetchBtn.textContent = 'Fetch';
+        }
+      });
+    }
 
     // Bind remove section button
     sectionEl.querySelector('.removeExamSectionBtn').addEventListener('click', () => {
