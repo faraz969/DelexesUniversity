@@ -72,13 +72,29 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="sort_order" class="form-label">Sort Order</label>
-                            <input type="number" class="form-control @error('sort_order') is-invalid @enderror" 
-                                   id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}" min="0">
-                            @error('sort_order')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sort_order" class="form-label">Sort Order</label>
+                                    <input type="number" class="form-control @error('sort_order') is-invalid @enderror" 
+                                           id="sort_order" name="sort_order" value="{{ old('sort_order', 0) }}" min="0">
+                                    @error('sort_order')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cut_off_grade" class="form-label">Cut Off Grade</label>
+                                    <input type="number" class="form-control @error('cut_off_grade') is-invalid @enderror" 
+                                           id="cut_off_grade" name="cut_off_grade" value="{{ old('cut_off_grade') }}" 
+                                           min="1" max="36" placeholder="e.g., 24">
+                                    <small class="text-muted">Minimum grade point required</small>
+                                    @error('cut_off_grade')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-3 form-check">

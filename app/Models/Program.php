@@ -16,7 +16,8 @@ class Program extends Model
         'duration',
         'mode',
         'is_active',
-        'sort_order'
+        'sort_order',
+        'cut_off_grade'
     ];
 
     protected $casts = [

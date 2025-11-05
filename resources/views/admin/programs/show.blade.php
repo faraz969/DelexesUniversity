@@ -57,6 +57,10 @@
                                     <td>{{ $program->sort_order }}</td>
                                 </tr>
                                 <tr>
+                                    <td><strong>Cut Off Grade:</strong></td>
+                                    <td>{{ $program->cut_off_grade ?: 'Not specified' }}</td>
+                                </tr>
+                                <tr>
                                     <td><strong>Created:</strong></td>
                                     <td>{{ $program->created_at->format('M d, Y') }}</td>
                                 </tr>
