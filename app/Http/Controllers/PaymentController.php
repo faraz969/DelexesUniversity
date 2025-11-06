@@ -192,7 +192,7 @@ class PaymentController extends Controller
                 try { $data = $response->json(); } catch (\Throwable $t) { /* ignore json errors */ }
 
                 // Try common fields for redirect URL
-                $redirectUrl = $data['checkoutUrl'] ?? $data['payment_url'] ?? $data['url'] ?? $data['redirectUrl'] ?? null;
+                $redirectUrl = $data['checkOutUrl'] ?? $data['payment_url'] ?? $data['url'] ?? $data['redirectUrl'] ?? null;
                 if (!$redirectUrl) {
                     // Sometimes redirect comes via Location header
                     $locationHeader = $response->header('Location') ?? ($response->headers()['Location'][0] ?? null);
