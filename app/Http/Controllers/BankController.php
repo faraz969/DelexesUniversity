@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\FormType;
+use App\Helpers\CountryCodes;
 
 class BankController extends Controller
 {
@@ -36,7 +37,8 @@ class BankController extends Controller
     public function createUser()
     {
         $formTypes = FormType::active()->orderBy('name')->get();
-        return view('bank.create-user', compact('formTypes'));
+        $countries = CountryCodes::getCountries();
+        return view('bank.create-user', compact('formTypes', 'countries'));
     }
 
     public function storeUser(Request $request)

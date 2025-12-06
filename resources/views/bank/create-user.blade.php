@@ -1,5 +1,27 @@
 @extends('layouts.app')
 
+@section('head')
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+        padding-left: 12px;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #1e3a8a;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -43,8 +65,17 @@
 
                         <div class="mb-3">
                             <label for="nationality" class="form-label">Nationality <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('nationality') is-invalid @enderror" 
-                                   id="nationality" name="nationality" value="{{ old('nationality') }}" required placeholder="e.g., Ghana">
+                            <select class="form-control @error('nationality') is-invalid @enderror" 
+                                    id="nationality" name="nationality" required>
+                                <option value="">-- Select Nationality --</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country['name'] }}" 
+                                            data-flag="{{ $country['flag'] }}"
+                                            {{ old('nationality', 'Ghana') === $country['name'] ? 'selected' : '' }}>
+                                        {{ $country['name'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('nationality')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -64,6 +95,7 @@
                                     <option value="{{ $formType->id }}" 
                                             data-local-price="{{ $formType->local_price }}" 
                                             data-international-price="{{ $formType->international_price }}"
+                                            data-conversion-rate="{{ $formType->conversion_rate ?? 1 }}"
                                             {{ old('form_type_id') == $formType->id ? 'selected' : '' }}>
                                         {{ $formType->name }} - 
                                         @if($isLocal)
@@ -106,14 +138,57 @@
     </div>
 </div>
 
+<!-- Select2 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const nationalityInput = document.getElementById('nationality');
+$(document).ready(function() {
+    // Initialize Select2 for nationality dropdown with search
+    $('#nationality').select2({
+        placeholder: '-- Select Nationality --',
+        allowClear: false,
+        width: '100%',
+        theme: 'default',
+        minimumResultsForSearch: 0, // Always show search box
+        templateResult: formatCountry,
+        templateSelection: formatCountrySelection,
+        escapeMarkup: function(markup) {
+            return markup;
+        }
+    });
+
+    // Format country options with flags in dropdown
+    function formatCountry(country) {
+        if (country.loading) {
+            return country.text;
+        }
+        
+        // Get the flag from the option's data attribute
+        var flag = $(country.element).data('flag') || '';
+        var countryName = country.text || $(country.element).text();
+        
+        var $container = $(
+            "<div class='select2-result-country' style='display: flex; align-items: center; padding: 5px 0;'>" +
+                "<span style='font-size: 1.2em; margin-right: 8px;'>" + flag + "</span>" +
+                "<span>" + countryName + "</span>" +
+            "</div>"
+        );
+        
+        return $container;
+    }
+
+    // Format selected country
+    function formatCountrySelection(country) {
+        // Get the flag from the option's data attribute
+        var flag = $(country.element).data('flag') || '';
+        var countryName = country.text || $(country.element).text();
+        return flag + ' ' + countryName;
+    }
+
     const formTypeSelect = document.getElementById('form_type_id');
     
     function updateFormTypePrices() {
-        const nationality = nationalityInput.value.trim().toLowerCase();
-        const isLocal = nationality === 'ghana';
+        const nationality = $('#nationality').val() || '';
+        const isLocal = nationality.toLowerCase().trim() === 'ghana';
         
         // Update all option texts
         formTypeSelect.querySelectorAll('option').forEach(option => {
@@ -122,19 +197,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const formTypeName = option.textContent.split(' - ')[0];
             const localPrice = parseFloat(option.dataset.localPrice);
             const internationalPrice = parseFloat(option.dataset.internationalPrice);
+            const conversionRate = parseFloat(option.dataset.conversionRate) || 1;
             
             if (isLocal) {
                 option.textContent = formTypeName + ' - ₵' + localPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             } else {
-                option.textContent = formTypeName + ' - $' + internationalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                // Calculate GHS equivalent
+                const ghsEquivalent = internationalPrice * conversionRate;
+                option.textContent = formTypeName + ' - $' + internationalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + 
+                                    ' (₵' + ghsEquivalent.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ')';
             }
         });
     }
     
-    if (nationalityInput && formTypeSelect) {
-        nationalityInput.addEventListener('input', updateFormTypePrices);
-        nationalityInput.addEventListener('change', updateFormTypePrices);
-    }
+    // Update price when nationality changes
+    $('#nationality').on('select2:select', function (e) {
+        updateFormTypePrices();
+    });
+    
+    // Initialize on page load
+    updateFormTypePrices();
 });
 </script>
 @endsection
