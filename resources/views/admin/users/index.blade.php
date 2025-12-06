@@ -109,7 +109,7 @@
                                             <td>
                                                 @if($user->creator)
                                                     @if($user->creator->isBank())
-                                                        <span class="badge bg-success">{{ $user->creator->bank_name ?? $user->creator->name }}</span>
+                                                        <span class="badge bg-success">{{ $user->creator->branch ?? $user->creator->name }}</span>
                                                     @else
                                                         {{ $user->creator->name }}
                                                         <small class="text-muted d-block">{{ $user->creator->role_display }}</small>
