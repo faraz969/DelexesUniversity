@@ -19,6 +19,31 @@
             </a>
         </div>
         <div class="card-body">
+            <!-- Search Form -->
+            <form method="GET" action="{{ route('bank.dashboard') }}" class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" 
+                               class="form-control" 
+                               name="search" 
+                               placeholder="Search by name, email, or phone..." 
+                               value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                @if(request('search'))
+                    <div class="mt-2">
+                        <a href="{{ route('bank.dashboard') }}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-times"></i> Clear Search
+                        </a>
+                        <small class="text-muted ms-2">Searching for: "{{ request('search') }}"</small>
+                    </div>
+                @endif
+            </form>
             @if($users->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -55,7 +80,14 @@
                     </table>
                 </div>
             @else
-                <p class="text-muted">No users created yet. Click "Create New Student" to get started.</p>
+                @if(request('search'))
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No users found matching your search criteria. 
+                        <a href="{{ route('bank.dashboard') }}" class="alert-link">Clear search</a> to see all users.
+                    </div>
+                @else
+                    <p class="text-muted">No users created yet. Click "Create New Student" to get started.</p>
+                @endif
             @endif
         </div>
     </div>

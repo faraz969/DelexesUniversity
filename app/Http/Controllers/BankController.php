@@ -11,14 +11,24 @@ use App\Models\FormType;
 
 class BankController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $bankUser = Auth::user();
         
         // Get only users created by this bank user
-        $users = User::where('created_by', $bankUser->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = User::where('created_by', $bankUser->id);
+        
+        // Apply search filter if provided
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('phone', 'like', '%' . $searchTerm . '%');
+            });
+        }
+        
+        $users = $query->orderBy('created_at', 'desc')->get();
         
         return view('bank.dashboard', compact('users', 'bankUser'));
     }

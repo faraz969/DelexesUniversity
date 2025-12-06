@@ -47,7 +47,10 @@
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav ms-auto">
                         @auth
-                            @if(Auth::user()->isStaff())
+                            @if(Auth::user()->isBank())
+                                {{-- Bank users see minimal navbar --}}
+                                <li class="nav-item"><a class="nav-link text-white" href="{{ route('bank.dashboard') }}">Bank Dashboard</a></li>
+                            @elseif(Auth::user()->isStaff())
                                 @if(Auth::user()->isHOD())
                                     <li class="nav-item"><a class="nav-link text-white" href="{{ route('hod.dashboard') }}">HOD Dashboard</a></li>
                                 @elseif(Auth::user()->isPresident())
