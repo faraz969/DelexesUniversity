@@ -13,7 +13,7 @@
 
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Created Users ({{ $users->count() }})</h5>
+            <h5 class="mb-0">Created Users ({{ $users->total() }})</h5>
             <a href="{{ route('bank.users.create') }}" class="btn btn-primary">
                 <i class="fas fa-user-plus"></i> Create New Student
             </a>
@@ -40,11 +40,11 @@
                         <a href="{{ route('bank.dashboard') }}" class="btn btn-sm btn-secondary">
                             <i class="fas fa-times"></i> Clear Search
                         </a>
-                        <small class="text-muted ms-2">Searching for: "{{ request('search') }}"</small>
+                        <small class="text-muted ms-2">Searching for: "{{ request('search') }}" ({{ $users->total() }} result(s))</small>
                     </div>
                 @endif
             </form>
-            @if($users->count() > 0)
+            @if($users->total() > 0)
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -78,6 +78,11 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="mt-3">
+                    {{ $users->links() }}
                 </div>
             @else
                 @if(request('search'))

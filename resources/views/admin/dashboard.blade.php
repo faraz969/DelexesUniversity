@@ -6,6 +6,37 @@
     @if(session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
+    
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('admin.dashboard') }}" class="mb-0">
+                <div class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" 
+                               class="form-control" 
+                               name="search" 
+                               placeholder="Search by applicant name, email, phone, serial number, application number, or academic year..." 
+                               value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+                @if(request('search'))
+                    <div class="mt-2">
+                        <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-times"></i> Clear Search
+                        </a>
+                        <small class="text-muted ms-2">Searching for: "{{ request('search') }}" ({{ $applications->total() }} result(s))</small>
+                    </div>
+                @endif
+            </form>
+        </div>
+    </div>
+    
     <div class="table-responsive">
         <table class="table table-bordered table-striped align-middle">
             <thead>
@@ -58,7 +89,17 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" class="text-center">No applications yet</td></tr>
+                    <tr>
+                        <td colspan="9" class="text-center">
+                            @if(request('search'))
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle"></i> No applications found matching your search criteria.
+                                </div>
+                            @else
+                                No applications yet
+                            @endif
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>

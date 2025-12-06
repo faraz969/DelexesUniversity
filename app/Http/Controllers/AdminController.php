@@ -9,9 +9,27 @@ use Illuminate\Support\Facades\Redirect;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $applications = Application::with(['user', 'examRecords.subjects'])->latest()->paginate(20);
+        $query = Application::with(['user', 'examRecords.subjects']);
+        
+        // Apply search filter if provided
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('application_number', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('academic_year', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                      $userQuery->where('name', 'like', '%' . $searchTerm . '%')
+                                 ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                                 ->orWhere('phone', 'like', '%' . $searchTerm . '%')
+                                 ->orWhere('serial_number', 'like', '%' . $searchTerm . '%');
+                  });
+            });
+        }
+        
+        $applications = $query->latest()->paginate(20)->withQueryString();
+        
         return view('admin.dashboard', compact('applications'));
     }
 

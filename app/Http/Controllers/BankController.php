@@ -28,7 +28,7 @@ class BankController extends Controller
             });
         }
         
-        $users = $query->orderBy('created_at', 'desc')->get();
+        $users = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
         
         return view('bank.dashboard', compact('users', 'bankUser'));
     }
