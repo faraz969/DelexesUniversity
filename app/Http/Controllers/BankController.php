@@ -66,7 +66,7 @@ class BankController extends Controller
         
         // Get form type for pricing
         $formType = FormType::find($validated['form_type_id']);
-        $isLocal = $validated['nationality'] === 'Ghana';
+        $isLocal = strtolower(trim($validated['nationality'])) === 'ghana';
         $amount = $isLocal ? $formType->local_price : $formType->international_price;
         
         // Convert to GHS if international student
@@ -123,14 +123,15 @@ class BankController extends Controller
         // Get payment data
         $paymentData = $user->payment ? json_decode($user->payment, true) : [];
         $receiptNumber = $paymentData['receipt_number'] ?? $this->generateReceiptNumber();
-        $amount = $paymentData['amount'] ?? ($user->nationality === 'Ghana' ? $formType->local_price : $formType->international_price);
+        $isLocalForAmount = strtolower(trim($user->nationality ?? '')) === 'ghana';
+        $amount = $paymentData['amount'] ?? ($isLocalForAmount ? $formType->local_price : $formType->international_price);
         $transactionDate = $paymentData['transaction_date'] ?? $user->created_at->format('Y-m-d H:i:s');
         $academicYear = $paymentData['academic_year'] ?? '2025/2026';
         $voucherFor = $paymentData['voucher_for'] ?? null;
 
         // Determine amount based on nationality if not stored
         if (!isset($paymentData['amount'])) {
-            $isLocal = $user->nationality === 'Ghana';
+            $isLocal = strtolower(trim($user->nationality ?? '')) === 'ghana';
             $amount = $isLocal ? $formType->local_price : $formType->international_price;
             if (!$isLocal && $formType->conversion_rate) {
                 $amount = $amount * $formType->conversion_rate;

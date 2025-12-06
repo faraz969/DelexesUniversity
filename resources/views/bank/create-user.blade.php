@@ -57,10 +57,14 @@
                                 <option value="">-- Select Form Type --</option>
                                 @foreach($formTypes as $formType)
                                     @php
-                                        $isLocal = old('nationality', 'Ghana') === 'Ghana';
+                                        $oldNationality = strtolower(trim(old('nationality', 'Ghana')));
+                                        $isLocal = $oldNationality === 'ghana';
                                         $price = $isLocal ? $formType->local_price : $formType->international_price;
                                     @endphp
-                                    <option value="{{ $formType->id }}" {{ old('form_type_id') == $formType->id ? 'selected' : '' }}>
+                                    <option value="{{ $formType->id }}" 
+                                            data-local-price="{{ $formType->local_price }}" 
+                                            data-international-price="{{ $formType->international_price }}"
+                                            {{ old('form_type_id') == $formType->id ? 'selected' : '' }}>
                                         {{ $formType->name }} - 
                                         @if($isLocal)
                                             ₵{{ number_format($formType->local_price, 2) }}
@@ -101,5 +105,37 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nationalityInput = document.getElementById('nationality');
+    const formTypeSelect = document.getElementById('form_type_id');
+    
+    function updateFormTypePrices() {
+        const nationality = nationalityInput.value.trim().toLowerCase();
+        const isLocal = nationality === 'ghana';
+        
+        // Update all option texts
+        formTypeSelect.querySelectorAll('option').forEach(option => {
+            if (option.value === '') return;
+            
+            const formTypeName = option.textContent.split(' - ')[0];
+            const localPrice = parseFloat(option.dataset.localPrice);
+            const internationalPrice = parseFloat(option.dataset.internationalPrice);
+            
+            if (isLocal) {
+                option.textContent = formTypeName + ' - ₵' + localPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            } else {
+                option.textContent = formTypeName + ' - $' + internationalPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        });
+    }
+    
+    if (nationalityInput && formTypeSelect) {
+        nationalityInput.addEventListener('input', updateFormTypePrices);
+        nationalityInput.addEventListener('change', updateFormTypePrices);
+    }
+});
+</script>
 @endsection
 

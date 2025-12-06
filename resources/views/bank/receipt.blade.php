@@ -241,6 +241,10 @@
                     <div class="field-label">TRANSACTION DATE:</div>
                     <div class="field-value">{{ \Carbon\Carbon::parse($transaction_date)->format('m/d/Y h:i:s A') }}</div>
                 </div>
+                <div class="field-group">
+                    <div class="field-label">Application URL:</div>
+                    <div class="field-value">apply.delexesuniversity.edu.gh</div>
+                </div>
             </div>
         </div>
 
@@ -264,17 +268,7 @@
             <div style="font-size: 20px;">GHS {{ $amount_paid }}</div>
         </div>
 
-        <div class="bank-stamp">
-            <div class="stamp-text">
-                {{ strtoupper($bank_name) }}<br>
-                {{ strtoupper($branch) }}<br>
-                <br>
-                RECEIVED<br>
-                {{ \Carbon\Carbon::parse($transaction_date)->format('d M Y') }}<br>
-                <br>
-                TELLER
-            </div>
-        </div>
+      
 
         <div class="footer">
             Issued by {{ $bank_name }} with authority of {{ $institution }}.
