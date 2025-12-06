@@ -65,6 +65,7 @@
                                         <th>Serial Number</th>
                                         <th>Role</th>
                                         <th>Department</th>
+                                        <th>Created By</th>
                                         <th>Created</th>
                                         <th>Actions</th>
                                     </tr>
@@ -103,6 +104,18 @@
                                                     {{ $user->department->name }}
                                                 @else
                                                     <span class="text-muted">No Department</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($user->creator)
+                                                    @if($user->creator->isBank())
+                                                        <span class="badge bg-success">{{ $user->creator->bank_name ?? $user->creator->name }}</span>
+                                                    @else
+                                                        {{ $user->creator->name }}
+                                                        <small class="text-muted d-block">{{ $user->creator->role_display }}</small>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted">Self-registered</span>
                                                 @endif
                                             </td>
                                             <td>{{ $user->created_at->format('M d, Y') }}</td>

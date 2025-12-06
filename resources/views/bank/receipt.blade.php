@@ -216,6 +216,12 @@
                     <div class="field-label">Paid By:</div>
                     <div class="field-value">{{ $paid_by }}</div>
                 </div>
+                @if(isset($voucher_for) && $voucher_for)
+                <div class="field-group">
+                    <div class="field-label">Voucher For:</div>
+                    <div class="field-value">{{ $voucher_for }}</div>
+                </div>
+                @endif
             </div>
 
             <div class="right-section">
@@ -224,8 +230,8 @@
                     <div class="field-value">{{ $serial_number }}</div>
                 </div>
                 <div class="field-group">
-                    <div class="field-label">OSN:</div>
-                    <div class="field-value">{{ $osn }}</div>
+                    <div class="field-label">PIN:</div>
+                    <div class="field-value">{{ $pin }}</div>
                 </div>
                 <div class="field-group">
                     <div class="field-label">Academic Year:</div>

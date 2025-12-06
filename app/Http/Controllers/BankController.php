@@ -45,11 +45,17 @@ class BankController extends Controller
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'nullable|email|unique:users,email',
             'phone' => 'required|string|max:20',
             'nationality' => 'required|string|max:255',
             'form_type_id' => 'required|exists:form_types,id',
+            'voucher_for' => 'nullable|string|max:255',
         ]);
+
+        // Generate a unique email if not provided (to satisfy unique constraint)
+        if (empty($validated['email'])) {
+            $validated['email'] = 'user_' . time() . '_' . rand(1000, 9999) . '@bank.created';
+        }
 
         // Generate a random PIN (8 uppercase alphanumeric)
         $pin = Str::upper(Str::random(8));
@@ -93,6 +99,7 @@ class BankController extends Controller
             'form_type' => $formType->name,
             'transaction_date' => now()->format('Y-m-d H:i:s'),
             'academic_year' => '2025/2026',
+            'voucher_for' => $validated['voucher_for'] ?? null,
         ]);
         $user->save();
 
@@ -119,6 +126,7 @@ class BankController extends Controller
         $amount = $paymentData['amount'] ?? ($user->nationality === 'Ghana' ? $formType->local_price : $formType->international_price);
         $transactionDate = $paymentData['transaction_date'] ?? $user->created_at->format('Y-m-d H:i:s');
         $academicYear = $paymentData['academic_year'] ?? '2025/2026';
+        $voucherFor = $paymentData['voucher_for'] ?? null;
 
         // Determine amount based on nationality if not stored
         if (!isset($paymentData['amount'])) {
@@ -137,8 +145,17 @@ class BankController extends Controller
                 'form_type' => $formType->name,
                 'transaction_date' => $transactionDate,
                 'academic_year' => $academicYear,
+                'voucher_for' => $voucherFor,
             ]);
             $user->save();
+        }
+
+        // Build payment description
+        $paymentDescription = 'Payment of Voucher';
+        if ($voucherFor) {
+            $paymentDescription .= ' for ' . $voucherFor;
+        } else {
+            $paymentDescription .= ' for ' . $user->name;
         }
 
         $data = [
@@ -152,10 +169,10 @@ class BankController extends Controller
             'bank_logo' => $bankUser->logo ? asset('storage/' . $bankUser->logo) : null,
             'academic_year' => $academicYear,
             'transaction_date' => $transactionDate,
-            'payment_description' => 'Payment of Voucher for ' . $user->name,
+            'payment_description' => $paymentDescription,
             'amount_paid' => number_format($amount, 2),
             'paid_by' => $user->name,
-            'osn' => Str::random(15),
+            'voucher_for' => $voucherFor,
         ];
 
         return view('bank.receipt', $data);

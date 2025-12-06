@@ -14,7 +14,7 @@
                         @csrf
                         
                         <div class="mb-3">
-                            <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <label for="name" class="form-label">Payee Name: <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" 
                                    id="name" name="name" value="{{ old('name') }}" required>
                             @error('name')
@@ -23,12 +23,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <label for="email" class="form-label">Email Address</label>
                             <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" name="email" value="{{ old('email') }}" required>
+                                   id="email" name="email" value="{{ old('email') }}">
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="text-muted">Optional - Leave blank if not available</small>
                         </div>
 
                         <div class="mb-3">
@@ -72,6 +73,17 @@
                             @error('form_type_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="voucher_for" class="form-label">Voucher For</label>
+                            <input type="text" class="form-control @error('voucher_for') is-invalid @enderror" 
+                                   id="voucher_for" name="voucher_for" value="{{ old('voucher_for') }}" 
+                                   placeholder="e.g., John Doe">
+                            @error('voucher_for')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Optional - Name of person this voucher is for</small>
                         </div>
 
                         <div class="alert alert-info">

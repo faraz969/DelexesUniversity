@@ -20,7 +20,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with('department');
+        $query = User::with(['department', 'creator']);
         
         // Apply search filter if provided
         if ($request->has('search') && !empty($request->search)) {
