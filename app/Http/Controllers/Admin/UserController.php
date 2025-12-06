@@ -18,9 +18,28 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('department')->orderBy('created_at', 'desc')->get();
+        $query = User::with('department');
+        
+        // Apply search filter if provided
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('email', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('phone', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('pin', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('serial_number', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('role', 'like', '%' . $searchTerm . '%')
+                  ->orWhereHas('department', function($deptQuery) use ($searchTerm) {
+                      $deptQuery->where('name', 'like', '%' . $searchTerm . '%');
+                  });
+            });
+        }
+        
+        $users = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        
         return view('admin.users.index', compact('users'));
     }
 

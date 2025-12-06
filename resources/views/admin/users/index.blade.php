@@ -27,7 +27,33 @@
                         </div>
                     @endif
 
-                    @if($users->count() > 0)
+                    <!-- Search Form -->
+                    <form method="GET" action="{{ route('admin.users.index') }}" class="mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-10">
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="search" 
+                                       placeholder="Search by name, email, phone, PIN, serial number, role, or department..." 
+                                       value="{{ request('search') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        @if(request('search'))
+                            <div class="mt-2">
+                                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-times"></i> Clear Search
+                                </a>
+                                <small class="text-muted ms-2">Searching for: "{{ request('search') }}" ({{ $users->total() }} result(s))</small>
+                            </div>
+                        @endif
+                    </form>
+
+                    @if($users->total() > 0)
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead>
@@ -104,10 +130,22 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Pagination -->
+                        <div class="mt-3">
+                            {{ $users->links() }}
+                        </div>
                     @else
                         <div class="text-center py-4">
-                            <p class="text-muted">No users found.</p>
-                            <a href="{{ route('admin.users.create') }}" class="btn btn-primary">Create First User</a>
+                            @if(request('search'))
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No users found matching your search criteria.
+                                    <a href="{{ route('admin.users.index') }}" class="alert-link">Clear search</a> to see all users.
+                                </div>
+                            @else
+                                <p class="text-muted">No users found.</p>
+                                <a href="{{ route('admin.users.create') }}" class="btn btn-primary">Create First User</a>
+                            @endif
                         </div>
                     @endif
                 </div>
