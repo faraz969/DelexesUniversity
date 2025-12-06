@@ -65,6 +65,9 @@
                                                     @case('president')
                                                         <span class="badge bg-primary">President</span>
                                                         @break
+                                                    @case('bank')
+                                                        <span class="badge bg-success">Bank</span>
+                                                        @break
                                                     @default
                                                         <span class="badge bg-secondary">Student</span>
                                                 @endswitch

@@ -35,5 +35,31 @@ class AdminController extends Controller
         $application->save();
         return Redirect::route('admin.dashboard')->with('status', 'Application status updated');
     }
+
+    public function destroy($id)
+    {
+        $application = Application::findOrFail($id);
+        
+        // Delete related records
+        // Get exam records first
+        $examRecords = \App\Models\ExamRecord::where('application_id', $application->id)->get();
+        
+        // Delete exam subject grades for each exam record
+        foreach ($examRecords as $examRecord) {
+            \App\Models\ExamSubjectGrade::where('exam_record_id', $examRecord->id)->delete();
+        }
+        
+        // Delete exam records
+        \App\Models\ExamRecord::where('application_id', $application->id)->delete();
+        
+        // Delete admission form
+        AdmissionForm::where('application_id', $application->id)->delete();
+        
+        // Delete the application
+        $application->delete();
+        
+        return Redirect::route('admin.dashboard')
+            ->with('status', 'Application deleted successfully.');
+    }
 }
 

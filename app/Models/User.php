@@ -30,7 +30,11 @@ class User extends Authenticatable
         'department_id',
         'pin_expires_at',
         'invoice_id',
-        'payment'
+        'payment',
+        'bank_name',
+        'branch',
+        'logo',
+        'created_by'
     ];
 
     /**
@@ -68,6 +72,16 @@ class User extends Authenticatable
         return $this->belongsTo(FormType::class);
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdUsers()
+    {
+        return $this->hasMany(User::class, 'created_by');
+    }
+
     public function isAdmin()
     {
         return $this->role === 'admin';
@@ -88,6 +102,11 @@ class User extends Authenticatable
         return $this->role === 'president';
     }
 
+    public function isBank()
+    {
+        return $this->role === 'bank';
+    }
+
     public function isStaff()
     {
         return in_array($this->role, ['admin', 'hod', 'registrar', 'president']);
@@ -106,6 +125,8 @@ class User extends Authenticatable
                 return 'President';
             case 'user':
                 return 'Student';
+            case 'bank':
+                return 'Bank';
             default:
                 return ucfirst($this->role);
         }

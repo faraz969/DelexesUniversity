@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -35,7 +37,8 @@ class UserController extends Controller
             'hod' => 'Head of Department',
             'registrar' => 'Registrar',
             'president' => 'President',
-            'admin' => 'Administrator'
+            'admin' => 'Administrator',
+            'bank' => 'Bank'
         ];
         return view('admin.users.create', compact('departments', 'roles'));
     }
@@ -52,10 +55,13 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20',
-            'role' => 'required|in:user,hod,registrar,president,admin',
+            'role' => 'required|in:user,hod,registrar,president,admin,bank',
             'department_id' => 'nullable|exists:departments,id',
             'nationality' => 'nullable|string|max:255',
             'form_type_id' => 'nullable|exists:form_types,id',
+            'bank_name' => 'required_if:role,bank|nullable|string|max:255',
+            'branch' => 'required_if:role,bank|nullable|string|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         // Generate a random PIN (8 uppercase alphanumeric) used as login password
@@ -66,6 +72,12 @@ class UserController extends Controller
         $serialNumber = null;
         if ($validated['role'] === 'user') {
             $serialNumber = $this->generateUniqueSerialNumber();
+        }
+        
+        // Handle logo upload for bank users
+        $logoPath = null;
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            $logoPath = $request->file('logo')->store('bank_logos', 'public');
         }
         
         $user = User::create([
@@ -80,6 +92,10 @@ class UserController extends Controller
             'pin_expires_at' => $pinExpiry,
             'nationality' => $validated['nationality'] ?? null,
             'form_type_id' => $validated['form_type_id'] ?? null,
+            'bank_name' => $validated['bank_name'] ?? null,
+            'branch' => $validated['branch'] ?? null,
+            'logo' => $logoPath,
+            'created_by' => Auth::id(),
         ]);
 
         // If admin picked a form to buy for a student, record it in user's data JSON (or create a relation later)
@@ -130,7 +146,8 @@ class UserController extends Controller
             'hod' => 'Head of Department',
             'registrar' => 'Registrar',
             'president' => 'President',
-            'admin' => 'Administrator'
+            'admin' => 'Administrator',
+            'bank' => 'Bank'
         ];
         return view('admin.users.edit', compact('user', 'departments', 'roles'));
     }
@@ -148,9 +165,24 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'required|string|max:20',
-            'role' => 'required|in:user,hod,registrar,president,admin',
+            'role' => 'required|in:user,hod,registrar,president,admin,bank',
             'department_id' => 'nullable|exists:departments,id',
+            'bank_name' => 'required_if:role,bank|nullable|string|max:255',
+            'branch' => 'required_if:role,bank|nullable|string|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        // Handle logo upload for bank users
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            // Delete old logo if exists
+            if ($user->logo && Storage::disk('public')->exists($user->logo)) {
+                Storage::disk('public')->delete($user->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('bank_logos', 'public');
+        } else {
+            // Keep existing logo if not uploading new one
+            unset($validated['logo']);
+        }
 
         $user->update($validated);
 

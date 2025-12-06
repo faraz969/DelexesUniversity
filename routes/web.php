@@ -26,6 +26,7 @@ Route::middleware(['auth', 'staff'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/applications/{id}', [App\Http\Controllers\AdminController::class, 'show'])->name('applications.show');
     Route::post('/applications/{id}/status', [App\Http\Controllers\AdminController::class, 'updateStatus'])->name('applications.updateStatus');
+    Route::delete('/applications/{id}', [App\Http\Controllers\AdminController::class, 'destroy'])->name('applications.destroy');
     
     // Department Management
     Route::resource('departments', App\Http\Controllers\Admin\DepartmentController::class);
@@ -63,6 +64,14 @@ Route::middleware(['auth', 'role:registrar'])->prefix('registrar')->name('regist
     Route::get('/applications/{application}', [App\Http\Controllers\RegistrarController::class, 'showApplication'])->name('applications.show');
     Route::post('/applications/{application}/approve', [App\Http\Controllers\RegistrarController::class, 'approveApplication'])->name('applications.approve');
     Route::post('/applications/{application}/reject', [App\Http\Controllers\RegistrarController::class, 'rejectApplication'])->name('applications.reject');
+});
+
+// Bank Routes
+Route::middleware(['auth', 'role:bank'])->prefix('bank')->name('bank.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\BankController::class, 'dashboard'])->name('dashboard');
+    Route::get('/users/create', [App\Http\Controllers\BankController::class, 'createUser'])->name('users.create');
+    Route::post('/users', [App\Http\Controllers\BankController::class, 'storeUser'])->name('users.store');
+    Route::get('/users/{user}/receipt', [App\Http\Controllers\BankController::class, 'downloadReceipt'])->name('users.receipt');
 });
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

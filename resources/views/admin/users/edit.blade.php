@@ -10,7 +10,7 @@
                 </div>
 
                 <div class="card-body">
-                    <form action="{{ route('admin.users.update', $user) }}" method="POST">
+                    <form action="{{ route('admin.users.update', $user) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
@@ -74,6 +74,43 @@
                             @enderror
                         </div>
 
+                        <!-- Bank-only fields -->
+                        <div id="bankFields" style="display:none;">
+                            <div class="mb-3">
+                                <label for="bank_name" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('bank_name') is-invalid @enderror" 
+                                       id="bank_name" name="bank_name" value="{{ old('bank_name', $user->bank_name) }}">
+                                @error('bank_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="branch" class="form-label">Branch <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('branch') is-invalid @enderror" 
+                                       id="branch" name="branch" value="{{ old('branch', $user->branch) }}">
+                                @error('branch')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="logo" class="form-label">Logo</label>
+                                @if($user->logo)
+                                    <div class="mb-2">
+                                        <img src="{{ asset('storage/' . $user->logo) }}" alt="Bank Logo" style="max-height: 100px; max-width: 200px;" class="img-thumbnail">
+                                        <br><small class="text-muted">Current logo</small>
+                                    </div>
+                                @endif
+                                <input type="file" class="form-control @error('logo') is-invalid @enderror" 
+                                       id="logo" name="logo" accept="image/*">
+                                <small class="form-text text-muted">Accepted formats: JPEG, PNG, JPG, GIF, SVG. Max size: 2MB. Leave empty to keep current logo.</small>
+                                @error('logo')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">Cancel</a>
                             <button type="submit" class="btn btn-primary">Update User</button>
@@ -89,6 +126,9 @@
 document.getElementById('role').addEventListener('change', function() {
     const departmentSelect = document.getElementById('department_id');
     const role = this.value;
+    const bankFields = document.getElementById('bankFields');
+    const bankNameInput = document.getElementById('bank_name');
+    const branchInput = document.getElementById('branch');
     
     if (role === 'hod') {
         departmentSelect.required = true;
@@ -97,6 +137,17 @@ document.getElementById('role').addEventListener('change', function() {
         departmentSelect.required = false;
         departmentSelect.closest('.mb-3').querySelector('.form-text').textContent = 'Required for HOD role, optional for others';
     }
+
+    // Toggle bank fields
+    if (role === 'bank') {
+        bankFields.style.display = 'block';
+        if (bankNameInput) bankNameInput.required = true;
+        if (branchInput) branchInput.required = true;
+    } else {
+        bankFields.style.display = 'none';
+        if (bankNameInput) bankNameInput.required = false;
+        if (branchInput) branchInput.required = false;
+    }
 });
 
 // Set initial state
@@ -104,10 +155,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const roleSelect = document.getElementById('role');
     const departmentSelect = document.getElementById('department_id');
     const role = roleSelect.value;
+    const bankFields = document.getElementById('bankFields');
+    const bankNameInput = document.getElementById('bank_name');
+    const branchInput = document.getElementById('branch');
     
     if (role === 'hod') {
         departmentSelect.required = true;
         departmentSelect.closest('.mb-3').querySelector('.form-text').textContent = 'Required for Head of Department';
+    }
+
+    if (role === 'bank') {
+        bankFields.style.display = 'block';
+        if (bankNameInput) bankNameInput.required = true;
+        if (branchInput) branchInput.required = true;
     }
 });
 </script>

@@ -47,7 +47,14 @@
                         </td>
                         <td><span class="badge bg-secondary">{{ ucfirst(str_replace('_',' ',$app->status)) }}</span></td>
                         <td>
-                            <a class="btn btn-sm btn-primary" href="{{ route('admin.applications.show', $app->id) }}">View</a>
+                            <div class="btn-group" role="group">
+                                <a class="btn btn-sm btn-primary" href="{{ route('admin.applications.show', $app->id) }}">View</a>
+                                <form action="{{ route('admin.applications.destroy', $app->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this application? This action cannot be undone.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty
