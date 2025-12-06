@@ -34,7 +34,7 @@
                                 <input type="text" 
                                        class="form-control" 
                                        name="search" 
-                                       placeholder="Search by name, email, phone, PIN, serial number, role, or department..." 
+                                       placeholder="Search by name, email, phone, PIN, serial number, role, department, bank name, or branch..." 
                                        value="{{ request('search') }}">
                             </div>
                             <div class="col-md-2">

@@ -34,6 +34,11 @@ class UserController extends Controller
                   ->orWhere('role', 'like', '%' . $searchTerm . '%')
                   ->orWhereHas('department', function($deptQuery) use ($searchTerm) {
                       $deptQuery->where('name', 'like', '%' . $searchTerm . '%');
+                  })
+                  ->orWhereHas('creator', function($creatorQuery) use ($searchTerm) {
+                      $creatorQuery->where('name', 'like', '%' . $searchTerm . '%')
+                                   ->orWhere('bank_name', 'like', '%' . $searchTerm . '%')
+                                   ->orWhere('branch', 'like', '%' . $searchTerm . '%');
                   });
             });
         }
