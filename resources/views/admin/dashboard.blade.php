@@ -104,7 +104,9 @@
             </tbody>
         </table>
     </div>
-    {{ $applications->links() }}
+    <div class="d-flex justify-content-center mt-3">
+        {{ $applications->links('pagination::bootstrap-4') }}
+    </div>
 </div>
 @endsection
 

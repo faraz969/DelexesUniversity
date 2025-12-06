@@ -81,8 +81,8 @@
                 </div>
                 
                 <!-- Pagination -->
-                <div class="mt-3">
-                    {{ $users->links() }}
+                <div class="mt-3 d-flex justify-content-center">
+                    {{ $users->links('pagination::bootstrap-4') }}
                 </div>
             @else
                 @if(request('search'))

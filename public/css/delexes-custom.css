@@ -131,9 +131,28 @@ a:hover {
 }
 
 /* Pagination styling */
+.pagination {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.pagination-sm .page-link {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
 .page-link {
   color: var(--delexes-light-blue);
   border-color: rgba(30, 58, 138, 0.1);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  min-width: 38px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .page-link:hover {
@@ -145,6 +164,23 @@ a:hover {
 .page-item.active .page-link {
   background-color: var(--delexes-dark-blue);
   border-color: var(--delexes-dark-blue);
+  color: #fff;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  cursor: auto;
+  background-color: #fff;
+  border-color: #dee2e6;
+  opacity: 0.6;
+}
+
+/* Fix pagination arrows size */
+.pagination .page-link i {
+  font-size: 0.75rem !important;
+  line-height: 1;
+  display: inline-block;
 }
 
 /* Progress bar styling */
