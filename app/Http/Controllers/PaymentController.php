@@ -127,6 +127,10 @@ class PaymentController extends Controller
                 'payment_mode' => $request->input('payment_mode', 'ecobank')
             ]
         ]);
+        Log::info('pending Data', [
+            'pending_data' => session('pending_registration'),
+            
+        ]);
 
         // Branch: GCB vs Ecobank based on selected payment method
         $selectedPaymentMode = strtolower($request->input('payment_mode', 'ecobank'));
