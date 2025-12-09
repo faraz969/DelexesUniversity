@@ -506,6 +506,12 @@ class PaymentController extends Controller
         $userData = $pendingData['user_data'];
         $formType = $pendingData['form_type'];
         $isLocal = $pendingData['is_local'];
+        Log::info('Complete registration log', [
+            'user' => $pendingData['user_data'],
+            'formType' => $pendingData['form_type']
+           
+        ]);
+
 
         // Generate PIN
         $pin = Str::upper(Str::random(8));
