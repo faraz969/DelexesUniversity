@@ -194,7 +194,13 @@ class PaymentController extends Controller
 
                 $data = [];
                 try { $data = $response->json(); } catch (\Throwable $t) { /* ignore json errors */ }
+                $checkoutId = $data['checkOutId'] ?? $data['checkoutId'] ?? null;
+                session([
+                    'checkoutid' => $checkoutId
+                ]);
+                $sessioncheck=session('checkoutid');
 
+                Log::info('GCB Checkout ID', ['checkoutid' => $sessioncheck]);
                 // Try common fields for redirect URL
                 $redirectUrl = $data['checkOutUrl'] ?? $data['payment_url'] ?? $data['url'] ?? $data['redirectUrl'] ?? null;
                 if (!$redirectUrl) {
@@ -214,13 +220,7 @@ class PaymentController extends Controller
                 }
 
                 // If API returns a checkout identifier only
-                $checkoutId = $data['checkOutId'] ?? $data['checkoutId'] ?? null;
-                session([
-                    'checkoutid' => $checkoutId
-                ]);
-                $sessioncheck=session('checkoutid');
-
-                Log::info('GCB Checkout ID', ['checkoutid' => $sessioncheck]);
+               
                 if ($checkoutId) {
                     // Try building a hosted URL under the same prefix if applicable
                     $hostedUrl = 'https://epay.gcbltd.com:211/checkout?id=' . $checkoutId;
