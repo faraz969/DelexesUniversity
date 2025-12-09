@@ -132,7 +132,7 @@
                                                     <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-warning">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    @if($user->id !== auth()->id())
+                                                    <!-- @if($user->id !== auth()->id())
                                                         <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?')">
                                                             @csrf
                                                             @method('DELETE')
@@ -140,7 +140,7 @@
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
                                                         </form>
-                                                    @endif
+                                                    @endif -->
                                                 </div>
                                             </td>
                                         </tr>
