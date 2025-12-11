@@ -110,19 +110,21 @@
   <h1>Delexes University College <br/>Undergraduate Admission Form</h1>
 
   @if(!empty($submitted))
-    <div class="alert alert-success">
+    <div class="alert alert-info">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span>Application submitted. Below is your application summary.</span>
-        <button type="button" class="btn btn-primary" onclick="printApplication()" style="background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; width:auto;">
+        <span>Application submitted. You can still edit your personal data below.</span>
+        <a href="{{ route('portal.application.print') }}" target="_blank" class="btn btn-primary" style="background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; width:auto; text-decoration: none;">
           <i class="fas fa-print"></i> Print Application
-        </button>
+        </a>
       </div>
     </div>
   @endif
 
-  @if(empty($submitted))
-  <form action="{{ $action ?? '#' }}" method="post" enctype="multipart/form-data" novalidate id="applicationForm">
+  <form action="{{ $action ?? route('portal.application.save') }}" method="post" enctype="multipart/form-data" novalidate id="applicationForm">
     @csrf
+    @if(!empty($submitted))
+      <input type="hidden" name="is_update" value="1">
+    @endif
     
     <!-- Progress Indicator -->
     <div class="progress-indicator">
@@ -290,8 +292,27 @@
         </div>
       </div>
 
-      <label for="mailing_address">Applicant’s Mailing Address <span style="color:red">*</span></label>
+      <label for="mailing_address">Applicant's Mailing Address <span style="color:red">*</span></label>
       <textarea id="mailing_address" name="mailing_address" rows="2" required>{{ $prefill['mailing_address'] ?? '' }}</textarea>
+
+      <div class="row two" style="margin-top:12px;">
+        <div>
+          <label for="street_address">Street Address</label>
+          <input id="street_address" name="street_address" type="text" value="{{ $prefill['street_address'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="post_code">Post Code</label>
+          <input id="post_code" name="post_code" type="text" value="{{ $prefill['post_code'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="city">City</label>
+          <input id="city" name="city" type="text" value="{{ $prefill['city'] ?? '' }}" />
+        </div>
+        <div>
+          <label for="country">Country</label>
+          <input id="country" name="country" type="text" value="{{ $prefill['country'] ?? '' }}" />
+        </div>
+      </div>
 
       <div class="row two">
         <div>
@@ -926,6 +947,7 @@
       </div>
       <!-- Navigation Buttons -->
       <div class="tab-navigation-buttons">
+        @if(empty($submitted))
         <button type="button" class="tab-nav-btn" id="prevBtn" onclick="changeTab(-1)" disabled>
           ← Previous
         </button>
@@ -935,13 +957,25 @@
         <button type="submit" class="tab-nav-btn btn-success" id="submitBtn" style="display: none;">
           Submit Application
         </button>
+        @else
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <button type="button" class="tab-nav-btn" id="prevBtn" onclick="changeTab(-1)" disabled>
+            ← Previous
+          </button>
+          <button type="button" class="tab-nav-btn" id="nextBtn" onclick="changeTab(1)">
+            Next →
+          </button>
+          <button type="submit" class="tab-nav-btn btn-primary" id="updatePersonalDataBtn" style="display: none;">
+            Update Personal Data
+          </button>
+        </div>
+        @endif
       </div>
     </div>
   </form>
-  @endif
 
-  @if(!empty($submitted))
-    <!-- Read-only Summary -->
+  @if(!empty($submitted) && false)
+    <!-- Read-only Summary (Hidden - using editable form instead) -->
     <fieldset>
       <legend>Application Summary</legend>
       <div class="row two">
@@ -1064,6 +1098,26 @@
           <label>Emergency Contact</label>
           <input type="text" value="{{ $application->data['emergency_contact'] ?? '' }}" readonly>
         </div>
+      </div>
+      <div class="row two" style="margin-top:12px;">
+        <div>
+          <label>Street Address</label>
+          <input type="text" value="{{ $application->data['street_address'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Post Code</label>
+          <input type="text" value="{{ $application->data['post_code'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>City</label>
+          <input type="text" value="{{ $application->data['city'] ?? '' }}" readonly>
+        </div>
+        <div>
+          <label>Country</label>
+          <input type="text" value="{{ $application->data['country'] ?? '' }}" readonly>
+        </div>
+      </div>
+      <div class="row two">
         <div>
           <label>Telephone</label>
           <input type="text" value="{{ $application->data['telephone'] ?? '' }}" readonly>
@@ -1279,6 +1333,39 @@
 // Tab Management
 let currentTab = 0;
 const totalTabs = 5;
+const isSubmitted = {{ !empty($submitted) ? 'true' : 'false' }};
+
+// Make non-personal-data fields readonly when submitted
+if (isSubmitted) {
+  document.addEventListener('DOMContentLoaded', function() {
+    const allTabs = ['education', 'programs', 'employment', 'documents'];
+    
+    allTabs.forEach(tabId => {
+      const tab = document.getElementById(tabId);
+      if (tab) {
+        const inputs = tab.querySelectorAll('input, select, textarea');
+        const buttons = tab.querySelectorAll('button');
+        
+        inputs.forEach(input => {
+          if (input.type !== 'hidden' && input.id !== 'updatePersonalDataBtn') {
+            input.disabled = true;
+            input.readOnly = true;
+            input.style.backgroundColor = '#f5f5f5';
+            input.style.cursor = 'not-allowed';
+          }
+        });
+        
+        buttons.forEach(button => {
+          if (button.type !== 'submit' && button.id !== 'updatePersonalDataBtn') {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
+          }
+        });
+      }
+    });
+  });
+}
 
 function showTab(n) {
   const tabs = document.querySelectorAll('.tab-content');
@@ -1301,15 +1388,24 @@ function showTab(n) {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   const submitBtn = document.getElementById('submitBtn');
+  const updatePersonalDataBtn = document.getElementById('updatePersonalDataBtn');
   
-  prevBtn.disabled = n === 0;
+  if (prevBtn) prevBtn.disabled = n === 0;
   
-  if (n === totalTabs - 1) {
-    nextBtn.style.display = 'none';
-    submitBtn.style.display = 'inline-block';
+  if (isSubmitted) {
+    // Show update button only on personal data tab
+    if (updatePersonalDataBtn) {
+      updatePersonalDataBtn.style.display = n === 0 ? 'inline-block' : 'none';
+    }
+    if (nextBtn) nextBtn.disabled = n === totalTabs - 1;
   } else {
-    nextBtn.style.display = 'inline-block';
-    submitBtn.style.display = 'none';
+    if (n === totalTabs - 1) {
+      if (nextBtn) nextBtn.style.display = 'none';
+      if (submitBtn) submitBtn.style.display = 'inline-block';
+    } else {
+      if (nextBtn) nextBtn.style.display = 'inline-block';
+      if (submitBtn) submitBtn.style.display = 'none';
+    }
   }
   
   // Check completion status
@@ -1466,10 +1562,12 @@ document.getElementById('sideNavList').addEventListener('click', function(e){
   const tabs = ['personal','education','programs','employment','documents'];
   const idx = tabs.indexOf(item.dataset.tab);
   if (idx === -1) return;
-  if (idx < currentTab || validateCurrentTab()) {
-    currentTab = idx;
-    showTab(currentTab);
+  // Allow navigation to any tab, but validation only required when not submitted or when moving forward
+  if (!isSubmitted && idx > currentTab && !validateCurrentTab()) {
+    return;
   }
+  currentTab = idx;
+  showTab(currentTab);
 });
 
 // Field change handlers for completion status
@@ -1948,6 +2046,35 @@ document.addEventListener('DOMContentLoaded', function() {
   
   form.addEventListener('submit', function (e) {
     console.log('Form submit validation triggered');
+    
+    // If application is submitted, only validate personal data tab and only if update button was clicked
+    if (isSubmitted) {
+      const updateBtn = document.getElementById('updatePersonalDataBtn');
+      const clickedButton = e.submitter || document.activeElement;
+      
+      // Only validate if the update button was clicked
+      if (clickedButton && clickedButton.id === 'updatePersonalDataBtn') {
+        const personalTab = document.getElementById('personal');
+        if (!personalTab) return;
+        
+        const requiredFields = personalTab.querySelectorAll('input[required], select[required], textarea[required]');
+        for (let field of requiredFields) {
+          if (!field.value.trim()) {
+            e.preventDefault();
+            e.stopPropagation();
+            field.focus();
+            field.style.outline = '2px solid #e53935';
+            alert('Please fill in all required fields in the Personal Data section.');
+            return false;
+          }
+        }
+        return true; // Allow submission for updates
+      } else {
+        // If not updating personal data, prevent form submission
+        e.preventDefault();
+        return false;
+      }
+    }
     
     // FIRST: Validate all file uploads for size (1MB = 1048576 bytes)
     const allFileInputs = form.querySelectorAll('input[type="file"].file-upload');

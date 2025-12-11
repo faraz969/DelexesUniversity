@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\Application;
 use App\Models\AdmissionForm;
 use App\Models\Department;
@@ -34,6 +36,17 @@ class DashboardController extends Controller
             $prefill = $application->data;
             $uploadedFiles = $application->data['_files'] ?? [];
             unset($prefill['_files']);
+        }
+        
+        // If application is submitted, also load data from AdmissionForm for the new address fields
+        if ($submitted && $application) {
+            $admissionForm = AdmissionForm::where('application_id', $application->id)->first();
+            if ($admissionForm) {
+                $prefill['street_address'] = $admissionForm->street_address ?? ($prefill['street_address'] ?? '');
+                $prefill['post_code'] = $admissionForm->post_code ?? ($prefill['post_code'] ?? '');
+                $prefill['city'] = $admissionForm->city ?? ($prefill['city'] ?? '');
+                $prefill['country'] = $admissionForm->country ?? ($prefill['country'] ?? '');
+            }
         }
 
         // Fetch departments with their active programs
@@ -70,12 +83,46 @@ class DashboardController extends Controller
         // Merge incoming draft data with any existing saved data to avoid losing previously filled fields
         $existing = is_array($application->data) ? $application->data : [];
         $application->data = array_replace_recursive($existing, $data);
-        $application->status = 'draft';
+        
+        // If application is already submitted, keep it as submitted but allow personal data updates
+        if ($application->status !== 'submitted' && $application->status !== 'successful' && $application->status !== 'not_successful') {
+            $application->status = 'draft';
+        }
+        
         $application->save();
+        
+        // Update AdmissionForm if it exists (for submitted applications)
+        if ($application->id) {
+            $form = AdmissionForm::where('application_id', $application->id)->first();
+            if ($form) {
+                $form->update([
+                    'street_address' => $request->input('street_address'),
+                    'post_code' => $request->input('post_code'),
+                    'city' => $request->input('city'),
+                    'country' => $request->input('country'),
+                    'full_name' => $request->input('full_name', $form->full_name),
+                    'dob' => $request->input('dob', $form->dob),
+                    'age' => $request->input('age', $form->age),
+                    'gender' => $request->input('gender', $form->gender),
+                    'birth_place' => $request->input('birth_place', $form->birth_place),
+                    'marital_status' => $request->input('marital_status', $form->marital_status),
+                    'nationality' => $request->input('nationality', $form->nationality),
+                    'passport_number' => $request->input('passport_number', $form->passport_number),
+                    'mailing_address' => $request->input('mailing_address', $form->mailing_address),
+                    'emergency_contact' => $request->input('emergency_contact', $form->emergency_contact),
+                    'telephone' => $request->input('telephone', $form->telephone),
+                    'email' => $request->input('email', $form->email),
+                    'hostel_required' => $request->input('hostel_required') === 'Yes' ? true : ($request->input('hostel_required') === 'No' ? false : $form->hostel_required),
+                    'has_disability' => $request->input('has_disability') === 'Yes' ? true : ($request->input('has_disability') === 'No' ? false : $form->has_disability),
+                    'disability_details' => $request->input('disability_details', $form->disability_details),
+                ]);
+            }
+        }
+        
         if ($request->wantsJson()) {
             return response()->json(['ok' => true]);
         }
-        return back()->with('status', 'Saved as draft');
+        return back()->with('status', 'Personal data updated successfully');
     }
 
     public function applicationSubmit(Request $request)
@@ -120,6 +167,10 @@ class DashboardController extends Controller
                 'nationality' => $request->input('nationality'),
                 'passport_number' => $request->input('passport_number'),
                 'mailing_address' => $request->input('mailing_address'),
+                'street_address' => $request->input('street_address'),
+                'post_code' => $request->input('post_code'),
+                'city' => $request->input('city'),
+                'country' => $request->input('country'),
                 'emergency_contact' => $request->input('emergency_contact'),
                 'telephone' => $request->input('telephone'),
                 'email' => $request->input('email', $user->email),
@@ -186,6 +237,15 @@ class DashboardController extends Controller
                 }
             }
         }
+        
+        // Send SMS notification to user
+        // Use telephone from application data if available, otherwise use user's phone
+        $phoneNumber = $request->input('telephone') ?? $user->phone;
+        if ($phoneNumber) {
+            $username = $request->input('full_name', $user->name);
+            $this->sendApplicationSMS($phoneNumber, $username);
+        }
+        
         return redirect()->route('portal.dashboard')->with('status', 'Application submitted');
     }
 
@@ -264,8 +324,11 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $application = $user->applications()->latest()->first();
-        $submitted = true;
-        $action = null;
+        
+        if (!$application) {
+            return redirect()->route('portal.dashboard')->with('error', 'No application found.');
+        }
+        
         $prefill = [];
         $uploadedFiles = [];
         if ($application && is_array($application->data)) {
@@ -273,6 +336,123 @@ class DashboardController extends Controller
             $uploadedFiles = $application->data['_files'] ?? [];
             unset($prefill['_files']);
         }
-        return view('admission.form', compact('action', 'prefill', 'submitted', 'uploadedFiles'));
+        
+        // Load exam records for the declaration
+        $examRecords = ExamRecord::with('subjects')
+            ->where('application_id', $application->id)
+            ->get();
+        
+        // Load admission form data for additional fields
+        $admissionForm = AdmissionForm::where('application_id', $application->id)->first();
+        if ($admissionForm) {
+            $prefill['street_address'] = $admissionForm->street_address ?? ($prefill['street_address'] ?? '');
+            $prefill['post_code'] = $admissionForm->post_code ?? ($prefill['post_code'] ?? '');
+            $prefill['city'] = $admissionForm->city ?? ($prefill['city'] ?? '');
+            $prefill['country'] = $admissionForm->country ?? ($prefill['country'] ?? '');
+        }
+        
+        return view('admission.declaration', compact('application', 'prefill', 'uploadedFiles', 'examRecords', 'user'));
+    }
+
+    /**
+     * Send SMS notification when application is submitted
+     */
+    private function sendApplicationSMS($phone, $username)
+    {
+        $message = "Thank you {$username}, your application has been received by DUC. Your application will be processed and the decision will be communicated to you at the appropriate time.";
+        
+        // Clean phone number (remove any non-numeric characters except +)
+        $cleanPhone = preg_replace('/[^0-9+]/', '', $phone);
+        
+        // Convert to format without + for Nalo (e.g., +233249318768 -> 0249318768)
+        $naloPhone = $cleanPhone;
+        if (strpos($cleanPhone, '+233') === 0) {
+            $naloPhone = '0' . substr($cleanPhone, 4); // Replace +233 with 0
+        } elseif (strpos($cleanPhone, '233') === 0) {
+            $naloPhone = '0' . substr($cleanPhone, 3); // Replace 233 with 0
+        }
+        
+        try {
+            // Primary: Try Nalo SMS API
+            $naloKey = env('NALO_SMS_KEY', 'LNMKky07fqvxVO6IK33I7UvuWMVXDR_sZnf8bDRnG7qu2ErL3vTM1farB5UYw26L');
+            $naloSenderId = env('NALO_SENDER_ID', 'DELEXESUC');
+            
+            Log::info('Attempting Application SMS via Nalo API', [
+                'phone' => $naloPhone,
+                'original_phone' => $cleanPhone,
+                'username' => $username,
+            ]);
+            
+            $naloResponse = Http::timeout(10)
+                ->post('https://sms.nalosolutions.com/smsbackend/Resl_Nalo/send-message/', [
+                    'key' => $naloKey,
+                    'msisdn' => $naloPhone,
+                    'message' => $message,
+                    'sender_id' => $naloSenderId
+                ]);
+
+            // Log the response for debugging
+            Log::info('Nalo SMS API Response', [
+                'phone' => $naloPhone,
+                'status' => $naloResponse->status(),
+                'response' => $naloResponse->body(),
+            ]);
+
+            // Check if Nalo was successful
+            if ($naloResponse->successful()) {
+                $responseData = $naloResponse->json();
+                // Nalo returns status codes like "1701" for success
+                // Check if status exists and is not an error code (errors are usually 17xx range except 1701)
+                if (isset($responseData['status']) && isset($responseData['job_id'])) {
+                    // If job_id is present, SMS was queued/sent successfully
+                    Log::info('Application SMS sent successfully via Nalo', [
+                        'job_id' => $responseData['job_id'],
+                        'status_code' => $responseData['status']
+                    ]);
+                    return;
+                }
+            }
+            
+            // If Nalo failed, log and fall through to backup
+            Log::warning('Nalo SMS API failed or returned error, trying backup Arkesel API');
+
+        } catch (\Exception $e) {
+            Log::error('Nalo SMS API Exception', [
+                'phone' => $naloPhone,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // Fallback: Try Arkesel SMS API
+        try {
+            $arkeselApiKey = env('ARKESEL_SMS_KEY', 'Ok1GNWlYWFB0VHI1NHJZUUQ=');
+            $arkeselSenderId = env('ARKESEL_SENDER_ID', 'UNIVERSITY');
+            
+            Log::info('Attempting Application SMS via Arkesel API (Backup)', [
+                'phone' => $cleanPhone,
+            ]);
+            
+            $arkeselResponse = Http::timeout(10)
+                ->get('https://sms.arkesel.com/sms/api', [
+                'action' => 'send-sms',
+                    'api_key' => $arkeselApiKey,
+                'to' => $cleanPhone,
+                    'from' => $arkeselSenderId,
+                'sms' => $message
+            ]);
+
+            // Log the response for debugging
+            Log::info('Arkesel SMS API Response (Backup)', [
+                'phone' => $cleanPhone,
+                'response' => $arkeselResponse->body(),
+                'status' => $arkeselResponse->status()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Both SMS APIs failed for application submission', [
+                'phone' => $phone,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
