@@ -61,6 +61,7 @@
                 <th>Subject</th>
                 <th>Grade (Letter)</th>
                 <th>Grade (Number)</th>
+                <th>Interpretation</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -119,6 +120,7 @@
             <td>${r.subject || ''}</td>
             <td>${r.grade || ''}</td>
             <td>${mapWaecLetterToNumber(r.grade)}</td>
+            <td>${r.interpretation || r.intrepretation || ''}</td>
           `;
           tbody.appendChild(tr);
         });
