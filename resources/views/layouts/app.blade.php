@@ -71,6 +71,15 @@
                                         <li><a class="dropdown-item" href="{{ route('admin.programs.index') }}">
                                             <i class="fas fa-graduation-cap"></i> Programs
                                         </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('admin.sessions.index') }}">
+                                            <i class="fas fa-clock"></i> Sessions
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('admin.campuses.index') }}">
+                                            <i class="fas fa-map-marker-alt"></i> Campuses
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('admin.intakes.index') }}">
+                                            <i class="fas fa-calendar-alt"></i> Intakes
+                                        </a></li>
                                         <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">
                                             <i class="fas fa-users"></i> Users
                                         </a></li>
@@ -86,6 +95,15 @@
                                         </a></li>
                                         <li><a class="dropdown-item" href="{{ route('admin.programs.create') }}">
                                             <i class="fas fa-plus"></i> Add Program
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('admin.sessions.create') }}">
+                                            <i class="fas fa-plus"></i> Add Session
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('admin.campuses.create') }}">
+                                            <i class="fas fa-plus"></i> Add Campus
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('admin.intakes.create') }}">
+                                            <i class="fas fa-plus"></i> Add Intake
                                         </a></li>
                                         <li><a class="dropdown-item" href="{{ route('admin.users.create') }}">
                                             <i class="fas fa-user-plus"></i> Add User

@@ -34,6 +34,15 @@ Route::middleware(['auth', 'staff'])->prefix('admin')->name('admin.')->group(fun
     // Program Management
     Route::resource('programs', App\Http\Controllers\Admin\ProgramController::class);
     
+    // Session Management
+    Route::resource('sessions', App\Http\Controllers\Admin\SessionController::class);
+    
+    // Campus Management
+    Route::resource('campuses', App\Http\Controllers\Admin\CampusController::class);
+    
+    // Intake Management
+    Route::resource('intakes', App\Http\Controllers\Admin\IntakeController::class);
+    
     // User Management
     Route::resource('users', App\Http\Controllers\Admin\UserController::class);
     Route::post('/users/{user}/reset-password', [App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.resetPassword');
@@ -84,7 +93,19 @@ Route::get('/admission', function () {
         }])
         ->orderBy('sort_order')
         ->get();
-    return view('admission.form', compact('departments'));
+    
+    // Fetch all active programs for preferences
+    $allPrograms = \App\Models\Program::where('is_active', true)
+        ->orderBy('sort_order')
+        ->orderBy('name')
+        ->get();
+    
+    // Fetch dynamic options
+    $sessions = \App\Models\Session::where('is_active', true)->orderBy('sort_order')->get();
+    $campuses = \App\Models\Campus::where('is_active', true)->orderBy('sort_order')->get();
+    $intakes = \App\Models\Intake::where('is_active', true)->orderBy('sort_order')->get();
+    
+    return view('admission.form', compact('departments', 'sessions', 'campuses', 'intakes', 'allPrograms'));
 })->name('admission.form');
 
 // Public registration (buy form)

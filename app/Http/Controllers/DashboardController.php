@@ -10,6 +10,9 @@ use App\Models\Application;
 use App\Models\AdmissionForm;
 use App\Models\Department;
 use App\Models\Program;
+use App\Models\Session;
+use App\Models\Campus;
+use App\Models\Intake;
 use Illuminate\Http\UploadedFile;
 use App\Models\ExamRecord;
 use App\Models\ExamSubjectGrade;
@@ -57,6 +60,17 @@ class DashboardController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        // Fetch all active programs for preferences
+        $allPrograms = Program::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // Fetch dynamic options
+        $sessions = Session::where('is_active', true)->orderBy('sort_order')->get();
+        $campuses = Campus::where('is_active', true)->orderBy('sort_order')->get();
+        $intakes = Intake::where('is_active', true)->orderBy('sort_order')->get();
+
         // Load exam records for submitted view
         $examRecords = [];
         if ($submitted && $application) {
@@ -65,7 +79,7 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        return view('admission.form', compact('action', 'prefill', 'submitted', 'uploadedFiles', 'departments', 'application', 'examRecords'));
+        return view('admission.form', compact('action', 'prefill', 'submitted', 'uploadedFiles', 'departments', 'application', 'examRecords', 'sessions', 'campuses', 'intakes', 'allPrograms'));
     }
 
     public function applicationSave(Request $request)

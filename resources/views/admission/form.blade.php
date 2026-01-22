@@ -596,9 +596,9 @@
           <select id="preferred_session" name="preferred_session">
             <option value="">-- Select --</option>
             @php $ps = $prefill['preferred_session'] ?? '' @endphp
-            <option {{ $ps==='Morning' ? 'selected' : '' }}>Morning</option>
-            <option {{ $ps==='Evening' ? 'selected' : '' }}>Evening</option>
-            <option {{ $ps==='Weekend' ? 'selected' : '' }}>Weekend</option>
+            @foreach($sessions ?? [] as $session)
+              <option value="{{ $session->name }}" {{ $ps === $session->name ? 'selected' : '' }}>{{ $session->name }}</option>
+            @endforeach
           </select>
         </div>
         <div>
@@ -606,7 +606,9 @@
           <select id="preferred_campus" name="preferred_campus">
             <option value="">-- Select --</option>
             @php $pc = $prefill['preferred_campus'] ?? '' @endphp
-            <option {{ $pc==='Delexes (Dawhenya)' ? 'selected' : '' }}>Delexes (Dawhenya)</option>
+            @foreach($campuses ?? [] as $campus)
+              <option value="{{ $campus->name }}" {{ $pc === $campus->name ? 'selected' : '' }}>{{ $campus->name }}</option>
+            @endforeach
           </select>
         </div>
         <div>
@@ -614,9 +616,9 @@
           <select id="intake_option" name="intake_option">
             <option value="">-- Select --</option>
             @php $io = $prefill['intake_option'] ?? '' @endphp
-            <option {{ $io==='January' ? 'selected' : '' }}>January</option>
-            <option {{ $io==='May' ? 'selected' : '' }}>May</option>
-            <option {{ $io==='September' ? 'selected' : '' }}>September</option>
+            @foreach($intakes ?? [] as $intake)
+              <option value="{{ $intake->name }}" {{ $io === $intake->name ? 'selected' : '' }}>{{ $intake->name }}</option>
+            @endforeach
           </select>
         </div>
       </div>
@@ -627,18 +629,6 @@
       <legend style="font-size:1rem;">Order of Preference (Repeat Selected Programmes)</legend>
       <div class="row three">
         @php 
-          $prefOptions = [
-            'BSc Nursing',
-            'BSc Midwifery',
-            'BSc Marketing',
-            'BSc Information Communication Technology',
-            'BSc Human Resource Management',
-            'BSc Risk Management and Insurance',
-            'BSc Cybersecurity and Digital Forensics',
-            'BSc Banking and Finance',
-            'BSc Computer Science',
-            'BSc Accounting',
-          ];
           $p1 = trim($prefill['pref1'] ?? '');
           $p2 = trim($prefill['pref2'] ?? '');
           $p3 = trim($prefill['pref3'] ?? '');
@@ -647,8 +637,8 @@
           <label for="pref1">1st Preference</label>
           <select id="pref1" name="pref1" onchange="autosaveDraft()">
             <option value="">-- Select --</option>
-            @foreach($prefOptions as $opt)
-              <option value="{{ $opt }}" {{ $p1 === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+            @foreach($allPrograms ?? [] as $program)
+              <option value="{{ $program->name }}" {{ $p1 === $program->name ? 'selected' : '' }}>{{ $program->name }}</option>
             @endforeach
           </select>
         </div>
@@ -656,8 +646,8 @@
           <label for="pref2">2nd Preference</label>
           <select id="pref2" name="pref2" onchange="autosaveDraft()">
             <option value="">-- Select --</option>
-            @foreach($prefOptions as $opt)
-              <option value="{{ $opt }}" {{ $p2 === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+            @foreach($allPrograms ?? [] as $program)
+              <option value="{{ $program->name }}" {{ $p2 === $program->name ? 'selected' : '' }}>{{ $program->name }}</option>
             @endforeach
           </select>
         </div>
@@ -665,8 +655,8 @@
           <label for="pref3">3rd Preference</label>
           <select id="pref3" name="pref3" onchange="autosaveDraft()">
             <option value="">-- Select --</option>
-            @foreach($prefOptions as $opt)
-              <option value="{{ $opt }}" {{ $p3 === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+            @foreach($allPrograms ?? [] as $program)
+              <option value="{{ $program->name }}" {{ $p3 === $program->name ? 'selected' : '' }}>{{ $program->name }}</option>
             @endforeach
           </select>
         </div>
