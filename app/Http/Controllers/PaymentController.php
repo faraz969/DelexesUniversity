@@ -375,8 +375,37 @@ class PaymentController extends Controller
             }
         }
 
-        // Simply complete registration without verification
-        return $this->completeRegistration($invoiceId, ['status' => 'paid']);
+        // Verify payment status before completing registration
+        $paymentStatus = $this->checkPaymentStatus($invoiceId);
+        
+        Log::info('Ecobank Payment Status Check', [
+            'invoice_id' => $invoiceId,
+            'payment_status' => $paymentStatus
+        ]);
+        
+        // Extract status from response (response format: {"INVOICE_ID": {"status": "..."}})
+        $actualStatus = null;
+        if (isset($paymentStatus[$invoiceId])) {
+            $actualStatus = $paymentStatus[$invoiceId]['status'] ?? null;
+        } elseif (isset($paymentStatus['status'])) {
+            $actualStatus = $paymentStatus['status'];
+        }
+        
+        // Check if payment was successful
+        $successStatuses = ['paid', 'success', 'completed', 'successful'];
+        if (!$actualStatus || !in_array(strtolower($actualStatus), $successStatuses)) {
+            Log::warning('Payment verification failed', [
+                'invoice_id' => $invoiceId,
+                'status' => $actualStatus,
+                'status_reason' => $paymentStatus[$invoiceId]['status_reason'] ?? 'unknown'
+            ]);
+            
+            return redirect()->route('payment.cancelled')
+                ->with('error', 'Payment verification failed. Status: ' . ($actualStatus ?? 'unknown') . '. Please contact support if payment was deducted.');
+        }
+        
+        // Payment verified successfully, complete registration
+        return $this->completeRegistration($invoiceId, $paymentStatus);
     }
 
     /**
@@ -402,14 +431,30 @@ class PaymentController extends Controller
         // Check payment status
         $paymentStatus = $this->checkPaymentStatus($invoiceId);
         
+        // Extract status from response (response format: {"INVOICE_ID": {"status": "..."}})
+        $actualStatus = null;
+        if (isset($paymentStatus[$invoiceId])) {
+            $actualStatus = $paymentStatus[$invoiceId]['status'] ?? null;
+        } elseif (isset($paymentStatus['status'])) {
+            $actualStatus = $paymentStatus['status'];
+        }
+        
         Log::info('IPN Notification Received', [
             'invoice_id' => $invoiceId,
-            'status' => $paymentStatus['status']
+            'status' => $actualStatus,
+            'full_response' => $paymentStatus
         ]);
 
         // If payment is successful, complete registration
-        if ($paymentStatus['status'] === 'paid') {
+        $successStatuses = ['paid', 'success', 'completed', 'successful'];
+        if ($actualStatus && in_array(strtolower($actualStatus), $successStatuses)) {
             $this->completeRegistration($invoiceId, $paymentStatus);
+        } else {
+            Log::warning('IPN: Payment not successful, registration not completed', [
+                'invoice_id' => $invoiceId,
+                'status' => $actualStatus,
+                'status_reason' => $paymentStatus[$invoiceId]['status_reason'] ?? 'unknown'
+            ]);
         }
 
         return response('OK', 200);
@@ -427,7 +472,12 @@ class PaymentController extends Controller
             ]);
 
             if ($response->successful()) {
-                return $response->json();
+                $responseData = $response->json();
+                Log::info('Payment Status Check Response', [
+                    'invoice_id' => $invoiceId,
+                    'response' => $responseData
+                ]);
+                return $responseData;
             } else {
                 Log::error('Payment Status Check Failed', [
                     'invoice_id' => $invoiceId,
@@ -507,6 +557,29 @@ class PaymentController extends Controller
                 ->with('error', 'Invalid payment session. Please try again.');
         }
 
+        // Double-check payment status before completing registration
+        // Extract status from response (response format: {"INVOICE_ID": {"status": "..."}})
+        $actualStatus = null;
+        if (isset($paymentStatus[$invoiceId])) {
+            $actualStatus = $paymentStatus[$invoiceId]['status'] ?? null;
+        } elseif (isset($paymentStatus['status'])) {
+            $actualStatus = $paymentStatus['status'];
+        }
+
+        // Verify payment was actually successful
+        $successStatuses = ['paid', 'success', 'completed', 'successful'];
+        if (!$actualStatus || !in_array(strtolower($actualStatus), $successStatuses)) {
+            Log::error('Registration blocked: Payment not verified', [
+                'invoice_id' => $invoiceId,
+                'status' => $actualStatus,
+                'status_reason' => $paymentStatus[$invoiceId]['status_reason'] ?? 'unknown',
+                'payment_status' => $paymentStatus
+            ]);
+            
+            return redirect()->route('payment.cancelled')
+                ->with('error', 'Payment verification failed. Status: ' . ($actualStatus ?? 'unknown') . '. Registration cannot be completed without successful payment.');
+        }
+
         $userData = $pendingData['user_data'];
         $formType = $pendingData['form_type'];
         $isLocal = $pendingData['is_local'];
@@ -517,30 +590,75 @@ class PaymentController extends Controller
         ]);
 
 
-        // Generate PIN
-        $pin = Str::upper(Str::random(8));
-        $pinExpiry = Carbon::now()->addMonths(3);
-        
-        // Generate unique serial number (DUC + random 6 digits)
-        $serialNumber = $this->generateUniqueSerialNumber();
-
-        // Create or update user
-        $user = User::updateOrCreate(
-            ['email' => $userData['email']],
-            [
-                'name' => $userData['full_name'],
-                'phone' => $userData['country_code'] . $userData['phone'],
-                'nationality' => $userData['nationality'],
-                'form_type_id' => isset($pendingData['form_type']->id) ? $pendingData['form_type']->id : null,
-                'password' => Hash::make($pin),
-                'pin' => $pin,
-                'serial_number' => $serialNumber,
-                'pin_expires_at' => $pinExpiry,
-                'role' => 'user',
+        // Check if user with this invoice_id already exists (prevent duplicate registrations)
+        $existingUser = User::where('invoice_id', $invoiceId)->first();
+        if ($existingUser) {
+            Log::info('User already exists with this invoice_id', [
                 'invoice_id' => $invoiceId,
-                'payment'=> $paymentAmount
-            ]
-        );
+                'user_id' => $existingUser->id,
+                'user_email' => $existingUser->email
+            ]);
+            
+            // If user already exists, verify their payment was successful
+            $verifyStatus = $this->checkPaymentStatus($invoiceId);
+            $verifyActualStatus = null;
+            if (isset($verifyStatus[$invoiceId])) {
+                $verifyActualStatus = $verifyStatus[$invoiceId]['status'] ?? null;
+            } elseif (isset($verifyStatus['status'])) {
+                $verifyActualStatus = $verifyStatus['status'];
+            }
+            
+            $successStatuses = ['paid', 'success', 'completed', 'successful'];
+            if ($verifyActualStatus && in_array(strtolower($verifyActualStatus), $successStatuses)) {
+                // Payment is successful, user can proceed
+                Log::info('Existing user payment verified successfully', [
+                    'invoice_id' => $invoiceId,
+                    'user_id' => $existingUser->id
+                ]);
+                $user = $existingUser;
+                // Use existing user's PIN and serial number
+                $pin = $user->pin;
+                $serialNumber = $user->serial_number;
+                $pinExpiry = $user->pin_expires_at;
+            } else {
+                // Payment failed, don't allow registration
+                Log::error('Existing user payment verification failed', [
+                    'invoice_id' => $invoiceId,
+                    'user_id' => $existingUser->id,
+                    'status' => $verifyActualStatus
+                ]);
+                return redirect()->route('payment.cancelled')
+                    ->with('error', 'Payment verification failed for this invoice. Please contact support.');
+            }
+        } else {
+            // Generate PIN
+            $pin = Str::upper(Str::random(8));
+            $pinExpiry = Carbon::now()->addMonths(3);
+            
+            // Generate unique serial number (DUC + random 6 digits)
+            $serialNumber = $this->generateUniqueSerialNumber();
+
+            // Create or update user
+            $user = User::updateOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['full_name'],
+                    'phone' => $userData['country_code'] . $userData['phone'],
+                    'nationality' => $userData['nationality'],
+                    'form_type_id' => isset($pendingData['form_type']->id) ? $pendingData['form_type']->id : null,
+                    'password' => Hash::make($pin),
+                    'pin' => $pin,
+                    'serial_number' => $serialNumber,
+                    'pin_expires_at' => $pinExpiry,
+                    'role' => 'user',
+                    'invoice_id' => $invoiceId,
+                    'payment'=> $paymentAmount
+                ]
+            );
+            
+            // Send SMS with PIN for new registrations
+            $this->sendSMS($user->phone, $pin, $user->name, $serialNumber);
+        }
 
         // Clear session data
         session()->forget('pending_registration');
@@ -550,8 +668,10 @@ class PaymentController extends Controller
         $currency = $isLocal ? '₵' : '$';
         $studentType = $isLocal ? 'local' : 'international';
 
-        // Send SMS with PIN
-        $this->sendSMS($user->phone, $pin, $user->name, $serialNumber);
+        // Get PIN and serial number (use existing if user already existed)
+        $pin = $user->pin ?? $pin;
+        $serialNumber = $user->serial_number ?? $serialNumber;
+        $pinExpiry = $user->pin_expires_at ?? $pinExpiry;
 
         return view('registration.success', [
             'pin' => $pin,
