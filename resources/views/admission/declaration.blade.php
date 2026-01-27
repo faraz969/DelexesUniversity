@@ -300,7 +300,7 @@
                 </div>
                 <div class="university-name">
                     <h1>DELEXES UNIVERSITY COLLEGE</h1>
-                    <h2>Scholarship with Professionalism</h2>
+                    <h2>BE KNOWLEDGEABLE & INNOVATIVE IN SCIENCE AND TECHNOLOGY</h2>
                 </div>
             </div>
             <div class="title-section">
