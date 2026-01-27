@@ -63,6 +63,7 @@
                                         <th>Phone</th>
                                         <th>PIN</th>
                                         <th>Serial Number</th>
+                                        <th>Invoice ID</th>
                                         <th>Role</th>
                                         <th>Department</th>
                                         <th>Created By</th>
@@ -78,6 +79,7 @@
                                             <td>{{ $user->phone }}</td>
                                             <td><code>{{ $user->pin ?? '—' }}</code></td>
                                             <td><code>{{ $user->serial_number ?? '—' }}</code></td>
+                                            <td><code>{{ $user->invoice_id ?? '—' }}</code></td>
                                             <td>
                                                 @switch($user->role)
                                                     @case('admin')
