@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Models\FormType;
 use Illuminate\Support\Str;
@@ -590,6 +591,9 @@ class PaymentController extends Controller
         ]);
 
 
+        // Track whether this call is creating a brand new user
+        $isNewRegistration = false;
+
         // Check if user with this invoice_id already exists (prevent duplicate registrations)
         $existingUser = User::where('invoice_id', $invoiceId)->first();
         if ($existingUser) {
@@ -658,6 +662,40 @@ class PaymentController extends Controller
             
             // Send SMS with PIN for new registrations
             $this->sendSMS($user->phone, $pin, $user->name, $serialNumber);
+
+            // Mark that this is a new registration (not an existing invoice/user)
+            $isNewRegistration = $user->wasRecentlyCreated ?? true;
+        }
+
+        // Send admin email notification for new registrations only.
+        // Any failure here must NOT affect the registration flow.
+        if ($isNewRegistration) {
+            try {
+                $adminEmail = 'alfred.quarshie@delexesuniversity.edu.gh';
+                $subject = 'New Applicant Registration';
+                $body = "A new applicant has registered.\n\n"
+                    . "Name: {$user->name}\n"
+                    . "Email: {$user->email}\n"
+                    . "Phone: {$user->phone}\n"
+                    . "Invoice ID: {$invoiceId}\n"
+                    . "Serial Number: {$user->serial_number}\n"
+                    . "Payment Amount: {$paymentAmount}\n"
+                    . "Registered At: " . now()->toDateTimeString() . "\n";
+
+                Mail::raw($body, function ($message) use ($adminEmail, $subject) {
+                    $message->to($adminEmail)->subject($subject);
+                });
+
+                Log::info('Admin registration email sent', [
+                    'invoice_id' => $invoiceId,
+                    'admin_email' => $adminEmail,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Failed to send admin registration email', [
+                    'invoice_id' => $invoiceId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Clear session data
