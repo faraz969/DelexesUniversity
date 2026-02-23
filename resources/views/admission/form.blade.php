@@ -586,8 +586,6 @@
           </div>
         @endif
       </div>
-      <div class="hint">Tip: If you want applicants to choose multiple programmes, keep these dropdowns and also collect "Order of Preference" below.</div>
-
       <hr style="margin:16px 0;">
       <legend style="font-size:1rem;">Preferences</legend>
       <div class="row three">
@@ -625,42 +623,7 @@
 
       
 
-      <hr style="margin:16px 0;">
-      <legend style="font-size:1rem;">Order of Preference (Repeat Selected Programmes)</legend>
-      <div class="row three">
-        @php 
-          $p1 = trim($prefill['pref1'] ?? '');
-          $p2 = trim($prefill['pref2'] ?? '');
-          $p3 = trim($prefill['pref3'] ?? '');
-        @endphp
-        <div>
-          <label for="pref1">1st Preference</label>
-          <select id="pref1" name="pref1" onchange="autosaveDraft()">
-            <option value="">-- Select --</option>
-            @foreach($allPrograms ?? [] as $program)
-              <option value="{{ $program->name }}" {{ $p1 === $program->name ? 'selected' : '' }}>{{ $program->name }}</option>
-            @endforeach
-          </select>
-        </div>
-        <div>
-          <label for="pref2">2nd Preference</label>
-          <select id="pref2" name="pref2" onchange="autosaveDraft()">
-            <option value="">-- Select --</option>
-            @foreach($allPrograms ?? [] as $program)
-              <option value="{{ $program->name }}" {{ $p2 === $program->name ? 'selected' : '' }}>{{ $program->name }}</option>
-            @endforeach
-          </select>
-        </div>
-        <div>
-          <label for="pref3">3rd Preference</label>
-          <select id="pref3" name="pref3" onchange="autosaveDraft()">
-            <option value="">-- Select --</option>
-            @foreach($allPrograms ?? [] as $program)
-              <option value="{{ $program->name }}" {{ $p3 === $program->name ? 'selected' : '' }}>{{ $program->name }}</option>
-            @endforeach
-          </select>
-        </div>
-      </div>
+      
     </fieldset>
       </div>
 
