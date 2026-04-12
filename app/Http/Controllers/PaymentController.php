@@ -764,100 +764,118 @@ class PaymentController extends Controller
      */
     private function sendSMS($phone, $pin, $name, $serialNumber)
     {
-            $message = "Hello {$name}, your registration Serial Number is: {$serialNumber} and PIN is: {$pin}. This PIN expires in 3 months. Use this PIN to login to your dashboard.";
-            
-            // Clean phone number (remove any non-numeric characters except +)
-            $cleanPhone = preg_replace('/[^0-9+]/', '', $phone);
-            
-        // Convert to format without + for Nalo (e.g., +233249318768 -> 0249318768)
+        $message = "Hello {$name}, your registration Serial Number is: {$serialNumber} and PIN is: {$pin}. This PIN expires in 3 months. Use this PIN to login to your dashboard.";
+
+        $cleanPhone = preg_replace('/[^0-9+]/', '', $phone);
+
         $naloPhone = $cleanPhone;
         if (strpos($cleanPhone, '+233') === 0) {
-            $naloPhone = '0' . substr($cleanPhone, 4); // Replace +233 with 0
+            $naloPhone = '0' . substr($cleanPhone, 4);
         } elseif (strpos($cleanPhone, '233') === 0) {
-            $naloPhone = '0' . substr($cleanPhone, 3); // Replace 233 with 0
+            $naloPhone = '0' . substr($cleanPhone, 3);
         }
-        
+
         try {
-            // Primary: Try Nalo SMS API
+            $arkeselApiKey = env('ARKESEL_SMS_KEY', 'Ok1GNWlYWFB0VHI1NHJZUUQ=');
+            $arkeselSenderId = env('ARKESEL_SENDER_ID', 'DELEXESUC');
+
+            Log::info('Attempting SMS via Arkesel API', [
+                'phone' => $cleanPhone,
+            ]);
+
+            $arkeselResponse = Http::timeout(10)
+                ->get('https://sms.arkesel.com/sms/api', [
+                    'action' => 'send-sms',
+                    'api_key' => $arkeselApiKey,
+                    'to' => $cleanPhone,
+                    'from' => $arkeselSenderId,
+                    'sms' => $message,
+                ]);
+
+            Log::info('Arkesel SMS API Response', [
+                'phone' => $cleanPhone,
+                'status' => $arkeselResponse->status(),
+                'response' => $arkeselResponse->body(),
+            ]);
+
+            if ($arkeselResponse->successful()) {
+                $data = $arkeselResponse->json();
+                if (is_array($data) && $this->isArkeselSmsSuccess($data)) {
+                    Log::info('SMS sent successfully via Arkesel', ['response' => $data]);
+                    return;
+                }
+            }
+
+            Log::warning('Arkesel SMS API failed or returned error, trying Nalo API');
+        } catch (\Exception $e) {
+            Log::error('Arkesel SMS API Exception', [
+                'phone' => $cleanPhone,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
             $naloKey = env('NALO_SMS_KEY', 'LNMKky07fqvxVO6IK33I7UvuWMVXDR_sZnf8bDRnG7qu2ErL3vTM1farB5UYw26L');
             $naloSenderId = env('NALO_SENDER_ID', 'DELEXESUC');
-            
-            Log::info('Attempting SMS via Nalo API', [
+
+            Log::info('Attempting SMS via Nalo API (fallback)', [
                 'phone' => $naloPhone,
                 'original_phone' => $cleanPhone,
             ]);
-            
+
             $naloResponse = Http::timeout(10)
                 ->post('https://sms.nalosolutions.com/smsbackend/Resl_Nalo/send-message/', [
                     'key' => $naloKey,
                     'msisdn' => $naloPhone,
                     'message' => $message,
-                    'sender_id' => $naloSenderId
+                    'sender_id' => $naloSenderId,
                 ]);
 
-            // Log the response for debugging
             Log::info('Nalo SMS API Response', [
                 'phone' => $naloPhone,
                 'status' => $naloResponse->status(),
                 'response' => $naloResponse->body(),
             ]);
 
-            // Check if Nalo was successful
             if ($naloResponse->successful()) {
                 $responseData = $naloResponse->json();
-                // Nalo returns status codes like "1701" for success
-                // Check if status exists and is not an error code (errors are usually 17xx range except 1701)
                 if (isset($responseData['status']) && isset($responseData['job_id'])) {
-                    // If job_id is present, SMS was queued/sent successfully
                     Log::info('SMS sent successfully via Nalo', [
                         'job_id' => $responseData['job_id'],
-                        'status_code' => $responseData['status']
+                        'status_code' => $responseData['status'],
                     ]);
                     return;
                 }
             }
-            
-            // If Nalo failed, log and fall through to backup
-            Log::warning('Nalo SMS API failed or returned error, trying backup Arkesel API');
 
+            Log::warning('Nalo SMS API failed after Arkesel attempt');
         } catch (\Exception $e) {
-            Log::error('Nalo SMS API Exception', [
+            Log::error('Nalo SMS API Exception (both providers may have failed)', [
                 'phone' => $naloPhone,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
+    }
 
-        // Fallback: Try Arkesel SMS API
-        try {
-            $arkeselApiKey = env('ARKESEL_SMS_KEY', 'Ok1GNWlYWFB0VHI1NHJZUUQ=');
-            $arkeselSenderId = env('ARKESEL_SENDER_ID', 'UNIVERSITY');
-            
-            Log::info('Attempting SMS via Arkesel API (Backup)', [
-                'phone' => $cleanPhone,
-            ]);
-            
-            $arkeselResponse = Http::timeout(10)
-                ->get('https://sms.arkesel.com/sms/api', [
-                'action' => 'send-sms',
-                    'api_key' => $arkeselApiKey,
-                'to' => $cleanPhone,
-                    'from' => $arkeselSenderId,
-                'sms' => $message
-            ]);
-
-            // Log the response for debugging
-            Log::info('Arkesel SMS API Response (Backup)', [
-                'phone' => $cleanPhone,
-                'response' => $arkeselResponse->body(),
-                'status' => $arkeselResponse->status()
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Both SMS APIs failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage()
-            ]);
+    /**
+     * Interpret Arkesel send-sms JSON (formats vary slightly by account/version).
+     */
+    private function isArkeselSmsSuccess(array $data): bool
+    {
+        $code = $data['code'] ?? null;
+        if (in_array($code, ['ok', 'OK', '1000', 1000, 200, '200'], true)) {
+            return true;
         }
+        $status = strtolower((string) ($data['status'] ?? ''));
+        if (in_array($status, ['success', 'ok'], true)) {
+            return true;
+        }
+        $message = strtolower((string) ($data['message'] ?? ''));
+        if ($message !== '' && strpos($message, 'success') !== false && strpos($message, 'fail') === false) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
