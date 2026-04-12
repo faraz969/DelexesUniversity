@@ -341,10 +341,10 @@ class PaymentController extends Controller
                 ->with('error', 'Invalid payment response.');
         }
 
-        // Check if this was a GCB payment
-        $paymentMode = session('pending_registration.payment_mode');
+        // GCB payments are verified only against GCB — the invoice is never created on Ecobank/PayWithOnline,
+        // so Ecobank status check would always fail and block registration.
+        $paymentMode = strtolower((string) session('pending_registration.payment_mode', 'ecobank'));
         if ($paymentMode === 'gcb') {
-            // GCB may return checkOutId or status in query params
             $checkOutId = session('checkoutid');
             $statusParam = $request->get('statusCode') ?? $request->get('paymentStatus');
 
@@ -354,29 +354,35 @@ class PaymentController extends Controller
                 'status_param' => $statusParam,
             ]);
 
-            // If checkOutId is present, verify status with GCB
             if ($checkOutId) {
                 $verifiedStatus = $this->checkGcbPaymentStatus($checkOutId);
                 Log::info('GCB Status Check Result', ['verified_status' => $verifiedStatus]);
 
-                if (!in_array(strtolower($verifiedStatus), ['paid', 'success', 'completed', 'successful','00'])) {
+                if (!in_array(strtolower((string) $verifiedStatus), ['paid', 'success', 'completed', 'successful', '00'], true)) {
                     return redirect()->route('payment.cancelled')
                         ->with('error', 'Payment was not completed. Status: ' . $verifiedStatus);
                 }
             } elseif ($statusParam) {
-                // Use status from query param if no checkOutId
-                if (!in_array(strtolower($statusParam), ['paid', 'success', 'completed', 'successful'])) {
+                if (!in_array(strtolower((string) $statusParam), ['paid', 'success', 'completed', 'successful', '00'], true)) {
                     return redirect()->route('payment.cancelled')
                         ->with('error', 'Payment was not completed. Status: ' . $statusParam);
                 }
             } else {
-                // No status info: treat as cancelled
                 return redirect()->route('payment.cancelled')
                     ->with('error', 'Payment status could not be verified.');
             }
+
+            $gcbVerifiedPayload = [
+                $invoiceId => [
+                    'status' => 'paid',
+                    'status_reason' => 'Verified via GCB ePay',
+                ],
+            ];
+
+            return $this->completeRegistration($invoiceId, $gcbVerifiedPayload);
         }
 
-        // Verify payment status before completing registration
+        // Ecobank / default: verify payment status before completing registration
         $paymentStatus = $this->checkPaymentStatus($invoiceId);
         
         Log::info('Ecobank Payment Status Check', [
@@ -393,8 +399,8 @@ class PaymentController extends Controller
         }
         
         // Check if payment was successful
-        $successStatuses = ['paid', 'success', 'completed', 'successful'];
-        if (!$actualStatus || !in_array(strtolower($actualStatus), $successStatuses)) {
+        $successStatuses = ['paid', 'success', 'completed', 'successful', '00'];
+        if (!$actualStatus || !in_array(strtolower((string) $actualStatus), $successStatuses, true)) {
             Log::warning('Payment verification failed', [
                 'invoice_id' => $invoiceId,
                 'status' => $actualStatus,
@@ -447,8 +453,8 @@ class PaymentController extends Controller
         ]);
 
         // If payment is successful, complete registration
-        $successStatuses = ['paid', 'success', 'completed', 'successful'];
-        if ($actualStatus && in_array(strtolower($actualStatus), $successStatuses)) {
+        $successStatuses = ['paid', 'success', 'completed', 'successful', '00'];
+        if ($actualStatus && in_array(strtolower((string) $actualStatus), $successStatuses, true)) {
             $this->completeRegistration($invoiceId, $paymentStatus);
         } else {
             Log::warning('IPN: Payment not successful, registration not completed', [
@@ -567,9 +573,9 @@ class PaymentController extends Controller
             $actualStatus = $paymentStatus['status'];
         }
 
-        // Verify payment was actually successful
-        $successStatuses = ['paid', 'success', 'completed', 'successful'];
-        if (!$actualStatus || !in_array(strtolower($actualStatus), $successStatuses)) {
+        // Verify payment was actually successful (00 = GCB success code when echoed through some gateways)
+        $successStatuses = ['paid', 'success', 'completed', 'successful', '00'];
+        if (!$actualStatus || !in_array(strtolower((string) $actualStatus), $successStatuses, true)) {
             Log::error('Registration blocked: Payment not verified', [
                 'invoice_id' => $invoiceId,
                 'status' => $actualStatus,
@@ -602,37 +608,62 @@ class PaymentController extends Controller
                 'user_id' => $existingUser->id,
                 'user_email' => $existingUser->email
             ]);
-            
-            // If user already exists, verify their payment was successful
-            $verifyStatus = $this->checkPaymentStatus($invoiceId);
-            $verifyActualStatus = null;
-            if (isset($verifyStatus[$invoiceId])) {
-                $verifyActualStatus = $verifyStatus[$invoiceId]['status'] ?? null;
-            } elseif (isset($verifyStatus['status'])) {
-                $verifyActualStatus = $verifyStatus['status'];
-            }
-            
-            $successStatuses = ['paid', 'success', 'completed', 'successful'];
-            if ($verifyActualStatus && in_array(strtolower($verifyActualStatus), $successStatuses)) {
-                // Payment is successful, user can proceed
-                Log::info('Existing user payment verified successfully', [
-                    'invoice_id' => $invoiceId,
-                    'user_id' => $existingUser->id
-                ]);
-                $user = $existingUser;
-                // Use existing user's PIN and serial number
-                $pin = $user->pin;
-                $serialNumber = $user->serial_number;
-                $pinExpiry = $user->pin_expires_at;
+
+            $pendingPaymentMode = strtolower((string) ($pendingData['payment_mode'] ?? 'ecobank'));
+            $successStatuses = ['paid', 'success', 'completed', 'successful', '00'];
+
+            if ($pendingPaymentMode === 'gcb') {
+                $verifyActualStatus = null;
+                if (isset($paymentStatus[$invoiceId]['status'])) {
+                    $verifyActualStatus = $paymentStatus[$invoiceId]['status'];
+                } elseif (isset($paymentStatus['status'])) {
+                    $verifyActualStatus = $paymentStatus['status'];
+                }
+                if ($verifyActualStatus && in_array(strtolower((string) $verifyActualStatus), $successStatuses, true)) {
+                    Log::info('Existing user GCB payment verified (payload from callback)', [
+                        'invoice_id' => $invoiceId,
+                        'user_id' => $existingUser->id,
+                    ]);
+                    $user = $existingUser;
+                    $pin = $user->pin;
+                    $serialNumber = $user->serial_number;
+                    $pinExpiry = $user->pin_expires_at;
+                } else {
+                    Log::error('Existing user GCB payment verification failed', [
+                        'invoice_id' => $invoiceId,
+                        'user_id' => $existingUser->id,
+                        'status' => $verifyActualStatus,
+                    ]);
+                    return redirect()->route('payment.cancelled')
+                        ->with('error', 'Payment verification failed for this invoice. Please contact support.');
+                }
             } else {
-                // Payment failed, don't allow registration
-                Log::error('Existing user payment verification failed', [
-                    'invoice_id' => $invoiceId,
-                    'user_id' => $existingUser->id,
-                    'status' => $verifyActualStatus
-                ]);
-                return redirect()->route('payment.cancelled')
-                    ->with('error', 'Payment verification failed for this invoice. Please contact support.');
+                $verifyStatus = $this->checkPaymentStatus($invoiceId);
+                $verifyActualStatus = null;
+                if (isset($verifyStatus[$invoiceId])) {
+                    $verifyActualStatus = $verifyStatus[$invoiceId]['status'] ?? null;
+                } elseif (isset($verifyStatus['status'])) {
+                    $verifyActualStatus = $verifyStatus['status'];
+                }
+
+                if ($verifyActualStatus && in_array(strtolower((string) $verifyActualStatus), $successStatuses, true)) {
+                    Log::info('Existing user payment verified successfully', [
+                        'invoice_id' => $invoiceId,
+                        'user_id' => $existingUser->id
+                    ]);
+                    $user = $existingUser;
+                    $pin = $user->pin;
+                    $serialNumber = $user->serial_number;
+                    $pinExpiry = $user->pin_expires_at;
+                } else {
+                    Log::error('Existing user payment verification failed', [
+                        'invoice_id' => $invoiceId,
+                        'user_id' => $existingUser->id,
+                        'status' => $verifyActualStatus
+                    ]);
+                    return redirect()->route('payment.cancelled')
+                        ->with('error', 'Payment verification failed for this invoice. Please contact support.');
+                }
             }
         } else {
             // Generate PIN
